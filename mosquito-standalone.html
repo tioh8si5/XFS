@@ -1,0 +1,448 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>揮手趕蚊子</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Noto+Sans+TC:wght@500;700;900&display=swap">
+<style>
+/* Layout: full-bleed rear-camera stage; HUD pinned to top corners; one centered card for start / game over. Single dark summer-night look, by choice. */
+:root{
+  --bg:#0f1220;
+  --ink:#f2f4fb;
+  --muted:#a3a9c4;
+  --blood:#e8344a;
+  --citron:#c8e64a;
+  --panel:rgba(15,18,32,.88);
+  --line:rgba(242,244,251,.14);
+  --display:"Bungee","Noto Sans TC",system-ui,sans-serif;
+  --body:"Noto Sans TC",system-ui,-apple-system,"PingFang TC","Microsoft JhengHei",sans-serif;
+  color-scheme:dark;
+}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);overflow:hidden}
+#stage{position:relative;width:100%;height:100%;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none}
+#cv{position:absolute;inset:0;width:100%;height:100%;display:block}
+#cam{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+
+.hud{position:absolute;top:calc(12px + env(safe-area-inset-top,0px));left:max(16px,env(safe-area-inset-left,0px));right:max(16px,env(safe-area-inset-right,0px));display:flex;justify-content:space-between;align-items:flex-start;gap:12px;pointer-events:none}
+.score{font-family:var(--display);font-size:clamp(30px,9vw,46px);line-height:1;color:var(--citron);font-variant-numeric:tabular-nums;text-shadow:0 3px 0 rgba(0,0,0,.45)}
+.score small{display:block;margin-top:4px;font-family:var(--body);font-size:11px;font-weight:700;letter-spacing:.14em;color:var(--muted);text-shadow:none}
+.side{display:grid;justify-items:end;gap:8px}
+.lives{display:flex;gap:9px;padding-top:4px}
+.lives i{width:14px;height:14px;background:var(--blood);border-radius:50% 0 50% 50%;transform:rotate(-45deg);transition:opacity .2s}
+.lives i.lost{opacity:.18}
+.row{display:flex;gap:6px}
+.chip{font:inherit;font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:4px 10px;background:rgba(15,18,32,.55)}
+button.chip{pointer-events:auto;cursor:pointer;box-shadow:none}
+
+.hint{position:absolute;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);font-size:14px;font-weight:700;color:var(--ink);background:rgba(15,18,32,.72);border:1px solid var(--line);border-radius:999px;padding:8px 16px;white-space:nowrap;pointer-events:none;transition:opacity .6s}
+
+.overlay{position:absolute;inset:0;display:grid;place-items:center;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:24px;background:radial-gradient(120% 80% at 50% 25%,rgba(200,230,74,.12),rgba(15,18,32,.8) 70%)}
+.card{width:100%;max-width:400px;background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:26px 22px;display:grid;gap:14px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.eyebrow{font-size:11px;font-weight:700;letter-spacing:.18em;color:var(--citron)}
+h1{margin:0;font-family:var(--display);font-weight:400;font-size:clamp(36px,11vw,50px);line-height:1.04;text-wrap:balance}
+h1 span{color:var(--blood)}
+.lead{margin:0;font-size:15px;line-height:1.6}
+.btns{display:grid;gap:10px;margin-top:4px}
+button{font:inherit;font-weight:900;font-size:16px;border-radius:14px;padding:14px 16px;border:0;cursor:pointer;transition:transform .1s}
+button:active{transform:scale(.97)}
+button:focus-visible{outline:3px solid var(--citron);outline-offset:3px}
+.primary{background:var(--citron);color:#1d2406;box-shadow:0 4px 0 #8aa22a}
+.ghost{background:transparent;color:var(--ink);border:2px solid var(--line)}
+.status{min-height:1.4em;font-size:13px;line-height:1.5;color:var(--citron)}
+.note{margin:0;font-size:12px;line-height:1.6;color:var(--muted)}
+.big{font-family:var(--display);font-size:64px;line-height:1;color:var(--citron);font-variant-numeric:tabular-nums}
+@media (prefers-reduced-motion:reduce){button,.hint{transition:none}}
+</style>
+<style>body{margin:0}</style>
+</head>
+<body>
+
+<div id="stage">
+  <video id="cam" playsinline muted></video>
+  <canvas id="cv"></canvas>
+
+  <div class="hud">
+    <div class="score"><span id="score">0</span><small>趕走的蚊子</small></div>
+    <div class="side">
+      <div class="lives" id="lives" aria-label="剩餘血量"><i></i><i></i><i></i></div>
+      <div class="row">
+        <span class="chip" id="modeChip">手指模式</span>
+        <button class="chip" id="btnSound" type="button">聲音：開</button>
+      </div>
+    </div>
+  </div>
+  <div class="hint" id="hint" style="opacity:0">對著鏡頭揮手，把蚊子搧走</div>
+
+  <div class="overlay" id="startOv">
+    <div class="card">
+      <div class="eyebrow">MVP · 後置鏡頭手勢</div>
+      <h1>揮手<br><span>趕蚊子</span></h1>
+      <p class="lead">把手機拿穩，後鏡頭朝前，在鏡頭前用力揮手，把蚊子搧出畫面。蚊子停下來會開始吸血，紅圈滿了就被叮一次，被叮三次遊戲結束。</p>
+      <div class="btns">
+        <button class="primary" id="btnHand">開啟後鏡頭，揮手玩</button>
+        <button class="ghost" id="btnTouch">用手指滑螢幕玩</button>
+      </div>
+      <div class="status" id="status" role="status"></div>
+      <p class="note">鏡頭模式需要用 HTTPS 網址開啟（例如 GitHub Pages），並允許鏡頭權限。在 Claude 裡預覽時鏡頭會被封鎖，可以先用手指模式試玩。</p>
+    </div>
+  </div>
+
+  <div class="overlay" id="overOv" hidden>
+    <div class="card">
+      <div class="eyebrow">你被叮了三次</div>
+      <div class="big" id="finalScore">0</div>
+      <p class="note" id="bestLine">最高紀錄 0 隻</p>
+      <div class="btns">
+        <button class="primary" id="btnAgain">再玩一次</button>
+        <button class="ghost" id="btnHome">回主畫面</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+const $ = s => document.querySelector(s);
+const stage = $('#stage'), cv = $('#cv'), ctx = cv.getContext('2d'), video = $('#cam');
+const MP_VER = '0.10.14';
+const MODEL = 'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task';
+const BITE_TIME = 2.4;
+
+let W = 0, H = 0, DPR = 1;
+function resize(){
+  const r = stage.getBoundingClientRect();
+  W = r.width; H = r.height; DPR = Math.min(window.devicePixelRatio || 1, 2);
+  cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+}
+addEventListener('resize', resize); resize();
+
+let mosq = [], texts = [], marks = [];
+let score = 0, lives = 3, running = false, mode = 'touch';
+let spawnT = 0, elapsed = 0, flash = 0, combo = 0, lastShoo = 0;
+const rnd = (a, b) => a + Math.random() * (b - a);
+const mSize = () => Math.max(18, Math.min(32, Math.min(W, H) * .046));
+
+/* ---------- mosquitoes ---------- */
+function spawn(){
+  const s = mSize(), side = Math.floor(Math.random() * 4);
+  const x = side === 0 ? -30 : side === 1 ? W + 30 : rnd(0, W);
+  const y = side === 2 ? -30 : side === 3 ? H + 30 : rnd(H * .15, H * .85);
+  mosq.push({ x, y, vx:0, vy:0, tx:rnd(W * .15, W * .85), ty:rnd(H * .2, H * .8), retarget:rnd(.5, 1.2),
+    phase:rnd(0, 9), state:'fly', t:0, flyTime:rnd(2.5, 5) - Math.min(1.2, elapsed * .02), bite:0, size:s * rnd(.9, 1.2), spin:0, ang:0, alpha:1 });
+}
+function shoo(m, dx, dy){
+  m.state = 'shoo';
+  const n = Math.hypot(dx, dy) || 1, sp = Math.max(W, H) * 1.6;
+  m.vx = dx / n * sp + rnd(-120, 120); m.vy = dy / n * sp + rnd(-120, 120);
+  m.spin = rnd(-14, 14);
+  const now = performance.now();
+  combo = now - lastShoo < 400 ? combo + 1 : 1; lastShoo = now;
+  const pts = m.bite > 0 ? 2 : 1;
+  score += pts + (combo >= 3 ? 1 : 0);
+  addText(combo >= 3 ? `${combo} 隻一起！` : m.bite > 0 ? '+2 救回來' : '+1', m.x, m.y - 20, combo >= 3 ? '#c8e64a' : '#f2f4fb');
+  updateHud();
+}
+function bite(m){
+  m.state = 'leave'; m.full = true;
+  marks.push({ x:m.x, y:m.y, life:3 });
+  addText('被叮了！', m.x, m.y - 24, '#e8344a');
+  flash = .35; navigator.vibrate?.(120);
+  lives -= 1; updateHud();
+  if (lives <= 0) gameOver();
+}
+function addText(text, x, y, color){ texts.push({ text, x:Math.max(50, Math.min(W - 50, x)), y, color, life:1 }); }
+
+function updateMosq(m, dt){
+  m.t += dt;
+  if (m.state === 'fly'){
+    m.retarget -= dt;
+    if (m.retarget <= 0){ m.tx = rnd(W * .1, W * .9); m.ty = rnd(H * .18, H * .85); m.retarget = rnd(.5, 1.3); }
+    const ax = (m.tx - m.x) * 3 + Math.sin(m.t * 9 + m.phase) * 900;
+    const ay = (m.ty - m.y) * 3 + Math.cos(m.t * 11 + m.phase * 2) * 900;
+    m.vx = (m.vx + ax * dt) * .93; m.vy = (m.vy + ay * dt) * .93;
+    m.x += m.vx * dt; m.y += m.vy * dt;
+    if (running && m.t > m.flyTime && m.x > 20 && m.x < W - 20 && m.y > H * .15 && m.y < H - 20){ m.state = 'land'; m.vx = m.vy = 0; }
+  } else if (m.state === 'land'){
+    if (running){ m.bite += dt; if (m.bite >= BITE_TIME) bite(m); }
+  } else if (m.state === 'shoo'){
+    m.x += m.vx * dt; m.y += m.vy * dt; m.ang += m.spin * dt; m.alpha -= dt * .9;
+  } else if (m.state === 'leave'){
+    m.vy -= 300 * dt; m.vx += Math.sin(m.t * 6) * 40 * dt;
+    m.x += m.vx * dt; m.y += m.vy * dt;
+  }
+}
+const gone = m => (m.state === 'shoo' || m.state === 'leave') && (m.alpha <= 0 || m.x < -80 || m.x > W + 80 || m.y < -80 || m.y > H + 80);
+
+/* ---------- swipe / wave detection ---------- */
+function segDist(px, py, ax, ay, bx, by){
+  const dx = bx - ax, dy = by - ay, l = dx * dx + dy * dy;
+  let t = l ? ((px - ax) * dx + (py - ay) * dy) / l : 0;
+  t = Math.max(0, Math.min(1, t));
+  return Math.hypot(ax + t * dx - px, ay + t * dy - py);
+}
+let trail = [];
+function sweep(a, b, radius){
+  trail.push({ x:b.x, y:b.y, t:b.t, r:radius });
+  if (!running) return;
+  const dt = (b.t - a.t) / 1000; if (dt <= 0 || dt > .25) return;
+  const dx = b.x - a.x, dy = b.y - a.y;
+  const speed = Math.hypot(dx, dy) / dt;
+  if (speed < Math.min(W, H) * (mode === 'hand' ? .7 : 1)) return;
+  for (const m of mosq){
+    if ((m.state === 'fly' || m.state === 'land') && segDist(m.x, m.y, a.x, a.y, b.x, b.y) < radius + m.size) shoo(m, dx, dy);
+  }
+}
+
+/* touch / mouse */
+let lastPt = null;
+function localXY(e){ const r = cv.getBoundingClientRect(); return { x:e.clientX - r.left, y:e.clientY - r.top, t:performance.now() }; }
+cv.addEventListener('pointerdown', e => { lastPt = localXY(e); });
+cv.addEventListener('pointermove', e => { if (!lastPt || mode !== 'touch') return; const p = localXY(e); sweep(lastPt, p, 40); lastPt = p; });
+const up = () => { lastPt = null; };
+cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up); cv.addEventListener('pointerleave', up);
+
+/* ---------- rear camera + hand tracking ---------- */
+let landmarker = null, lastVideoTime = -1, stream = null, hand = null, handPrev = null;
+function setStatus(t){ $('#status').textContent = t; }
+
+async function startHand(){
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw Object.assign(new Error(), { name:'NoCamera' });
+  setStatus('正在開啟後鏡頭…');
+  stream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:{ ideal:'environment' }, width:{ ideal:640 }, height:{ ideal:480 } }, audio:false });
+  video.srcObject = stream;
+  await video.play();
+  if (!landmarker){
+    setStatus('正在載入手部模型（約 8 MB，第一次較久）…');
+    const vision = await import(`https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${MP_VER}`);
+    const files = await vision.FilesetResolver.forVisionTasks(`https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${MP_VER}/wasm`);
+    const opts = d => ({ baseOptions:{ modelAssetPath:MODEL, delegate:d }, runningMode:'VIDEO', numHands:2, minHandDetectionConfidence:.4, minTrackingConfidence:.4 });
+    try { landmarker = await vision.HandLandmarker.createFromOptions(files, opts('GPU')); }
+    catch { landmarker = await vision.HandLandmarker.createFromOptions(files, opts('CPU')); }
+  }
+  setStatus('');
+}
+function stopCamera(){ if (stream){ stream.getTracks().forEach(t => t.stop()); stream = null; } }
+
+function coverRect(){
+  const vw = video.videoWidth || 640, vh = video.videoHeight || 480;
+  const s = Math.max(W / vw, H / vh), dw = vw * s, dh = vh * s;
+  return { dw, dh, offX:(W - dw) / 2, offY:(H - dh) / 2 };
+}
+let hands = [];
+function detectHand(now){
+  if (!landmarker || video.readyState < 2 || video.currentTime === lastVideoTime) return;
+  lastVideoTime = video.currentTime;
+  const res = landmarker.detectForVideo(video, now);
+  const { dw, dh, offX, offY } = coverRect();
+  const found = (res.landmarks || []).map(lm => {
+    const pts = lm.map(p => ({ x:offX + p.x * dw, y:offY + p.y * dh }));
+    const xs = pts.map(p => p.x), ys = pts.map(p => p.y);
+    const palm = [0, 5, 9, 13, 17].reduce((a, i) => ({ x:a.x + pts[i].x / 5, y:a.y + pts[i].y / 5 }), { x:0, y:0 });
+    const r = Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys)) * .6;
+    return { x:palm.x, y:palm.y, r, pts, t:now };
+  });
+  // match each hand to the nearest one from the previous frame, then sweep
+  const next = found.map(h => {
+    let best = null, bd = Infinity;
+    for (const p of hands){ const d = Math.hypot(p.x - h.x, p.y - h.y); if (d < bd){ bd = d; best = p; } }
+    if (best && now - best.t < 250){
+      const s = { x:best.x + (h.x - best.x) * .75, y:best.y + (h.y - best.y) * .75, r:h.r, pts:h.pts, t:now };
+      sweep(best, s, Math.max(40, h.r));
+      return s;
+    }
+    return h;
+  });
+  hands = next;
+}
+
+/* ---------- buzz sound ---------- */
+let audio = null, soundOn = true;
+function startAudio(){
+  if (audio) { audio.ctx.resume(); return; }
+  try {
+    const ac = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ac.createOscillator(); osc.type = 'sawtooth'; osc.frequency.value = 560;
+    const lfo = ac.createOscillator(); lfo.frequency.value = 7;
+    const lfoGain = ac.createGain(); lfoGain.gain.value = 35;
+    lfo.connect(lfoGain).connect(osc.frequency);
+    const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1100; bp.Q.value = 1.4;
+    const g = ac.createGain(); g.gain.value = 0;
+    osc.connect(bp).connect(g).connect(ac.destination);
+    osc.start(); lfo.start();
+    audio = { ctx:ac, gain:g, osc };
+  } catch {}
+}
+function updateAudio(){
+  if (!audio) return;
+  const flying = mosq.filter(m => m.state === 'fly').length;
+  const target = soundOn && running ? Math.min(.05, flying * .012) : 0;
+  audio.gain.gain.setTargetAtTime(target, audio.ctx.currentTime, .1);
+  audio.osc.frequency.setTargetAtTime(540 + flying * 15, audio.ctx.currentTime, .3);
+}
+$('#btnSound').addEventListener('click', () => { soundOn = !soundOn; $('#btnSound').textContent = soundOn ? '聲音：開' : '聲音：關'; });
+
+/* ---------- drawing ---------- */
+function drawBackground(){
+  if (mode === 'hand' && video.readyState >= 2){
+    const { dw, dh, offX, offY } = coverRect();
+    ctx.drawImage(video, offX, offY, dw, dh);
+    ctx.fillStyle = 'rgba(15,18,32,.28)'; ctx.fillRect(0, 0, W, H);
+  } else {
+    const g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, '#1a1f3a'); g.addColorStop(1, '#0f1220');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = 'rgba(255,214,120,.08)';
+    ctx.beginPath(); ctx.arc(W * .8, H * .18, Math.min(W, H) * .22, 0, Math.PI * 2); ctx.fill();
+  }
+}
+function drawMosquito(m, now){
+  const s = m.size;
+  const heading = m.state === 'shoo' ? m.ang : Math.atan2(m.vy || .01, m.vx || 1);
+  ctx.save(); ctx.globalAlpha = Math.max(0, m.alpha);
+  ctx.translate(m.x, m.y);
+  // light halo so it reads on any camera background
+  ctx.fillStyle = 'rgba(242,244,251,.22)';
+  ctx.beginPath(); ctx.arc(0, 0, s * 1.15, 0, Math.PI * 2); ctx.fill();
+  ctx.rotate(m.state === 'land' ? -Math.PI / 2 : heading);
+  ctx.strokeStyle = '#1b1c22'; ctx.lineWidth = 1.2; ctx.lineCap = 'round';
+  // legs
+  for (const k of [-1, 1]) for (const j of [-.25, .05, .35]){
+    ctx.beginPath(); ctx.moveTo(j * s, 0); ctx.lineTo(j * s + s * .25, k * s * .5); ctx.lineTo(j * s - s * .1, k * s * 1.05); ctx.stroke();
+  }
+  // abdomen with Aedes stripes
+  const fill = m.full ? '#b3122a' : m.bite > 0 ? `rgb(${60 + 140 * m.bite / BITE_TIME},30,40)` : '#26272e';
+  ctx.fillStyle = fill;
+  ctx.beginPath(); ctx.ellipse(-s * .45, 0, s * .55 * (m.full ? 1.15 : 1), s * .16 * (m.full ? 1.6 : 1), 0, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,.75)'; ctx.lineWidth = 1;
+  for (const k of [-.75, -.5, -.25]){ ctx.beginPath(); ctx.moveTo(k * s, -s * .13); ctx.lineTo(k * s, s * .13); ctx.stroke(); }
+  // thorax, head, proboscis
+  ctx.fillStyle = '#26272e';
+  ctx.beginPath(); ctx.ellipse(s * .15, 0, s * .2, s * .17, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(s * .42, 0, s * .1, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = '#1b1c22'; ctx.lineWidth = 1.4;
+  ctx.beginPath(); ctx.moveTo(s * .5, 0); ctx.lineTo(s * .95, 0); ctx.stroke();
+  // wings
+  const flap = m.state === 'land' ? .25 : Math.abs(Math.sin(now / 18 + m.phase));
+  ctx.fillStyle = 'rgba(210,225,255,.55)'; ctx.strokeStyle = 'rgba(255,255,255,.6)'; ctx.lineWidth = .8;
+  for (const k of [-1, 1]){
+    ctx.beginPath(); ctx.ellipse(-s * .1, k * s * .35 * (.4 + flap * .6), s * .45, s * .14, k * .5, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  }
+  ctx.restore();
+  if (m.state === 'land'){
+    const p = m.bite / BITE_TIME;
+    ctx.strokeStyle = 'rgba(15,18,32,.5)'; ctx.lineWidth = 5;
+    ctx.beginPath(); ctx.arc(m.x, m.y, s * 1.5, 0, Math.PI * 2); ctx.stroke();
+    ctx.strokeStyle = '#e8344a'; ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.arc(m.x, m.y, s * 1.5, -Math.PI / 2, -Math.PI / 2 + p * Math.PI * 2); ctx.stroke();
+  }
+}
+function drawTrail(now){
+  trail = trail.filter(p => now - p.t < 220);
+  if (trail.length > 60) trail.splice(0, trail.length - 60);
+  for (const p of trail){
+    const k = 1 - (now - p.t) / 220;
+    ctx.fillStyle = `rgba(200,230,74,${k * .18})`;
+    ctx.beginPath(); ctx.arc(p.x, p.y, p.r * (mode === 'hand' ? 1 : .6), 0, Math.PI * 2); ctx.fill();
+  }
+  if (mode === 'hand') for (const h of hands){
+    if (now - h.t > 250) continue;
+    ctx.fillStyle = 'rgba(200,230,74,.9)';
+    for (const i of [4, 8, 12, 16, 20]){ const p = h.pts[i]; ctx.beginPath(); ctx.arc(p.x, p.y, 5, 0, Math.PI * 2); ctx.fill(); }
+    ctx.strokeStyle = 'rgba(200,230,74,.55)'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(h.x, h.y, Math.max(40, h.r), 0, Math.PI * 2); ctx.stroke();
+  }
+}
+
+/* ---------- loop ---------- */
+let last = performance.now(), hintUntil = 0;
+function frame(now){
+  const dt = Math.min(.033, (now - last) / 1000); last = now;
+  if (mode === 'hand') detectHand(now);
+  if (running){
+    elapsed += dt; spawnT -= dt;
+    const cap = Math.min(10, 2 + Math.floor(elapsed / 8));
+    if (spawnT <= 0 && mosq.filter(m => m.state === 'fly' || m.state === 'land').length < cap){
+      spawn(); spawnT = Math.max(.7, 2 - elapsed * .025) + Math.random() * .5;
+    }
+  }
+  mosq.forEach(m => updateMosq(m, dt));
+  mosq = mosq.filter(m => !gone(m));
+  for (const t of texts){ t.y -= 40 * dt; t.life -= dt * .9; }
+  texts = texts.filter(t => t.life > 0);
+  for (const b of marks) b.life -= dt;
+  marks = marks.filter(b => b.life > 0);
+  flash = Math.max(0, flash - dt);
+  updateAudio();
+
+  drawBackground();
+  for (const b of marks){
+    ctx.fillStyle = `rgba(232,52,74,${Math.min(.45, b.life * .2)})`;
+    ctx.beginPath(); ctx.arc(b.x, b.y, 22, 0, Math.PI * 2); ctx.fill();
+  }
+  drawTrail(now);
+  mosq.forEach(m => drawMosquito(m, now));
+  ctx.textAlign = 'center'; ctx.font = '900 20px "Noto Sans TC", system-ui, sans-serif';
+  for (const t of texts){ ctx.globalAlpha = Math.min(1, t.life * 2); ctx.fillStyle = t.color; ctx.fillText(t.text, t.x, t.y); }
+  ctx.globalAlpha = 1;
+  if (flash > 0){ ctx.fillStyle = `rgba(232,52,74,${flash})`; ctx.fillRect(0, 0, W, H); }
+  if (mode === 'hand' && running && !hands.some(h => now - h.t < 300)){
+    ctx.fillStyle = 'rgba(242,244,251,.9)'; ctx.font = '700 16px "Noto Sans TC", system-ui, sans-serif';
+    ctx.fillText('把手伸到鏡頭前面', W / 2, H * .9);
+  }
+  $('#hint').style.opacity = running && now < hintUntil ? 1 : 0;
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+/* ---------- game state ---------- */
+function updateHud(){
+  $('#score').textContent = score;
+  [...$('#lives').children].forEach((el, i) => el.classList.toggle('lost', i >= lives));
+  $('#modeChip').textContent = mode === 'hand' ? '後鏡頭模式' : '手指模式';
+}
+function startGame(){
+  mosq = []; texts = []; marks = []; trail = [];
+  score = 0; lives = 3; elapsed = 0; spawnT = .5; flash = 0; combo = 0;
+  running = true; startAudio();
+  $('#startOv').hidden = true; $('#overOv').hidden = true;
+  $('#hint').textContent = mode === 'hand' ? '在鏡頭前用力揮手，把蚊子搧走' : '手指快速滑過蚊子';
+  hintUntil = performance.now() + 4000;
+  updateHud();
+}
+function gameOver(){
+  running = false;
+  let best = score;
+  try { best = Math.max(score, +localStorage.getItem('mosqBest') || 0); localStorage.setItem('mosqBest', best); } catch {}
+  $('#finalScore').textContent = score;
+  $('#bestLine').textContent = `最高紀錄 ${best} 隻`;
+  setTimeout(() => { $('#overOv').hidden = false; }, 700);
+}
+
+$('#btnTouch').addEventListener('click', () => { stopCamera(); mode = 'touch'; startGame(); });
+$('#btnHand').addEventListener('click', async () => {
+  const btn = $('#btnHand'); btn.disabled = true;
+  startAudio();
+  try {
+    await startHand();
+    mode = 'hand'; startGame();
+  } catch (e) {
+    stopCamera();
+    const n = e && e.name;
+    if (n === 'NotAllowedError' || n === 'SecurityError' || n === 'NoCamera')
+      setStatus('無法使用鏡頭：權限被拒絕，或目前頁面不允許開鏡頭（例如在 Claude 內預覽）。請改用手指模式，或用 HTTPS 網址開啟。');
+    else if (n === 'NotFoundError' || n === 'NotReadableError' || n === 'OverconstrainedError')
+      setStatus('找不到可用的後鏡頭，或鏡頭正被其他 App 使用。');
+    else
+      setStatus('手部模型載入失敗，請確認網路可以連到 jsdelivr 與 Google 儲存空間後再試一次。');
+  } finally { btn.disabled = false; }
+});
+$('#btnAgain').addEventListener('click', startGame);
+$('#btnHome').addEventListener('click', () => { $('#overOv').hidden = true; $('#startOv').hidden = false; setStatus(''); });
+updateHud();
+</script>
+
+</body>
+</html>
