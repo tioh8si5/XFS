@@ -1,0 +1,416 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>揮刀切水果</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Noto+Sans+TC:wght@500;700;900&display=swap">
+<style>
+/* Layout: full-bleed canvas stage; HUD pinned to the top corners; one centered card for start / game over. Single dark arcade look, by choice. */
+:root{
+  --bg:#0d1410;
+  --ink:#f3f7ee;
+  --muted:#9fb3a3;
+  --melon:#ff4d5e;
+  --rind:#3fbf5a;
+  --peel:#ffb627;
+  --panel:rgba(13,20,16,.86);
+  --line:rgba(243,247,238,.12);
+  --display:"Bungee","Noto Sans TC",system-ui,sans-serif;
+  --body:"Noto Sans TC",system-ui,-apple-system,"PingFang TC","Microsoft JhengHei",sans-serif;
+  color-scheme:dark;
+}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);overflow:hidden}
+#stage{position:relative;width:100%;height:100%;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none}
+#cv{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:crosshair}
+#cam{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+
+.hud{position:absolute;top:calc(12px + env(safe-area-inset-top,0px));left:max(16px,env(safe-area-inset-left,0px));right:max(16px,env(safe-area-inset-right,0px));display:flex;justify-content:space-between;align-items:flex-start;gap:12px;pointer-events:none}
+.score{font-family:var(--display);font-size:clamp(30px,9vw,46px);line-height:1;color:var(--peel);font-variant-numeric:tabular-nums;text-shadow:0 3px 0 rgba(0,0,0,.45)}
+.score small{display:block;margin-top:4px;font-family:var(--body);font-size:11px;font-weight:700;letter-spacing:.14em;color:var(--muted);text-shadow:none}
+.side{display:grid;justify-items:end;gap:6px}
+.lives{display:flex;gap:6px}
+.lives i{width:16px;height:16px;border-radius:50%;background:var(--melon);box-shadow:inset 0 -3px 0 rgba(0,0,0,.25);transition:transform .2s,background .2s}
+.lives i.lost{background:transparent;border:2px solid var(--line);box-shadow:none;transform:scale(.8)}
+.chip{font-size:11px;font-weight:700;letter-spacing:.08em;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:3px 9px;background:rgba(13,20,16,.5)}
+
+.hint{position:absolute;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);font-size:14px;font-weight:700;color:var(--ink);background:rgba(13,20,16,.7);border:1px solid var(--line);border-radius:999px;padding:8px 16px;white-space:nowrap;pointer-events:none;transition:opacity .6s}
+
+.overlay{position:absolute;inset:0;display:grid;place-items:center;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:24px;background:radial-gradient(120% 80% at 50% 30%,rgba(63,191,90,.14),rgba(13,20,16,.75) 70%)}
+.card{width:100%;max-width:400px;background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:26px 22px;display:grid;gap:14px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.eyebrow{font-size:11px;font-weight:700;letter-spacing:.18em;color:var(--rind)}
+h1{margin:0;font-family:var(--display);font-weight:400;font-size:clamp(38px,12vw,54px);line-height:1.02;text-wrap:balance}
+h1 span{color:var(--melon)}
+.lead{margin:0;font-size:15px;line-height:1.6;color:var(--ink)}
+.btns{display:grid;gap:10px;margin-top:4px}
+button{font:inherit;font-weight:900;font-size:16px;border-radius:14px;padding:14px 16px;border:0;cursor:pointer;transition:transform .1s}
+button:active{transform:scale(.97)}
+button:focus-visible{outline:3px solid var(--peel);outline-offset:3px}
+.primary{background:var(--rind);color:#06200d;box-shadow:0 4px 0 #23803a}
+.ghost{background:transparent;color:var(--ink);border:2px solid var(--line)}
+.status{min-height:1.4em;font-size:13px;line-height:1.5;color:var(--peel)}
+.note{margin:0;font-size:12px;line-height:1.6;color:var(--muted)}
+.big{font-family:var(--display);font-size:64px;line-height:1;color:var(--peel);font-variant-numeric:tabular-nums}
+@media (prefers-reduced-motion:reduce){button,.lives i,.hint{transition:none}}
+</style>
+<style>body{margin:0}</style>
+</head>
+<body>
+
+<div id="stage">
+  <video id="cam" playsinline muted></video>
+  <canvas id="cv"></canvas>
+
+  <div class="hud">
+    <div class="score"><span id="score">0</span><small>分數</small></div>
+    <div class="side">
+      <div class="lives" id="lives"><i></i><i></i><i></i></div>
+      <div class="chip" id="modeChip">手指模式</div>
+    </div>
+  </div>
+  <div class="hint" id="hint" style="opacity:0">手指快速滑過水果</div>
+
+  <div class="overlay" id="startOv">
+    <div class="card">
+      <div class="eyebrow">MVP · 手勢切水果</div>
+      <h1>揮刀<br><span>切水果</span></h1>
+      <p class="lead">對著前鏡頭伸出食指，快速揮過飛起的水果。漏掉水果或切到炸彈都會扣一條命，共三條。</p>
+      <div class="btns">
+        <button class="primary" id="btnHand">開啟鏡頭，用手勢玩</button>
+        <button class="ghost" id="btnTouch">用手指滑螢幕玩</button>
+      </div>
+      <div class="status" id="status" role="status"></div>
+      <p class="note">鏡頭模式需要用 HTTPS 網址開啟，並允許鏡頭權限。在 Claude 裡預覽時鏡頭會被封鎖，可以先用手指模式試玩。</p>
+    </div>
+  </div>
+
+  <div class="overlay" id="overOv" hidden>
+    <div class="card">
+      <div class="eyebrow">遊戲結束</div>
+      <div class="big" id="finalScore">0</div>
+      <p class="note" id="bestLine">最高分 0</p>
+      <div class="btns">
+        <button class="primary" id="btnAgain">再玩一次</button>
+        <button class="ghost" id="btnHome">回主畫面</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+const $ = s => document.querySelector(s);
+const stage = $('#stage'), cv = $('#cv'), ctx = cv.getContext('2d'), video = $('#cam');
+const MP_VER = '0.10.14';
+const MODEL = 'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task';
+
+let W = 0, H = 0, DPR = 1;
+function resize(){
+  const r = stage.getBoundingClientRect();
+  W = r.width; H = r.height; DPR = Math.min(window.devicePixelRatio || 1, 2);
+  cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+}
+addEventListener('resize', resize); resize();
+
+const FRUITS = [
+  { skin:'#2f9e44', flesh:'#ff4d5e', seed:'#1b1b1b', stripe:'#1d6b2d', scale:1.25 },
+  { skin:'#ff9f1c', flesh:'#ffd08a', scale:1, leaf:true },
+  { skin:'#e63946', flesh:'#fff3d6', seed:'#5a3a1a', scale:.95, leaf:true },
+  { skin:'#8a6a3b', flesh:'#8fd14f', seed:'#1f1f1f', scale:.9 },
+  { skin:'#ffe14d', flesh:'#fff7b0', scale:.9 },
+];
+
+let fruits = [], pieces = [], drops = [], texts = [], blade = [];
+let score = 0, lives = 3, running = false, mode = 'touch';
+let spawnT = 0, elapsed = 0, lastSliceT = 0, combo = 0, flash = 0;
+let pointerDown = false, handSeen = false, tip = null;
+
+const grav = () => H * 1.15;
+const baseR = () => Math.max(26, Math.min(56, Math.min(W, H) * 0.075));
+
+/* ---------- spawning ---------- */
+function spawn(){
+  const extra = Math.random() < Math.min(.6, elapsed / 60) ? (Math.random() < .3 ? 2 : 1) : 0;
+  for (let i = 0; i <= extra; i++){
+    const bomb = elapsed > 8 && Math.random() < .12;
+    const type = FRUITS[Math.floor(Math.random() * FRUITS.length)];
+    const r = baseR() * (bomb ? .95 : type.scale);
+    const x = W * (.15 + Math.random() * .7);
+    const peak = H * (.55 + Math.random() * .3);
+    const vy = -Math.sqrt(2 * grav() * peak);
+    const flight = 2 * -vy / grav();
+    const vx = (W * (.25 + Math.random() * .5) - x) / flight;
+    fruits.push({ x, y:H + r, vx, vy, r, rot:Math.random() * 6, vr:(Math.random() - .5) * 4, type, bomb, dead:false });
+  }
+}
+
+/* ---------- blade & slicing ---------- */
+function segDist(px, py, ax, ay, bx, by){
+  const dx = bx - ax, dy = by - ay, l = dx * dx + dy * dy;
+  let t = l ? ((px - ax) * dx + (py - ay) * dy) / l : 0;
+  t = Math.max(0, Math.min(1, t));
+  return Math.hypot(ax + t * dx - px, ay + t * dy - py);
+}
+function addBladePoint(x, y, t){
+  const prev = blade[blade.length - 1];
+  blade.push({ x, y, t });
+  if (prev && t - prev.t < 150) checkSlice(prev, blade[blade.length - 1]);
+}
+function checkSlice(a, b){
+  if (!running) return;
+  const dt = (b.t - a.t) / 1000; if (dt <= 0) return;
+  const speed = Math.hypot(b.x - a.x, b.y - a.y) / dt;
+  const need = Math.min(W, H) * (mode === 'hand' ? .9 : 1.2);
+  if (speed < need) return;
+  const ang = Math.atan2(b.y - a.y, b.x - a.x);
+  for (const f of fruits){
+    if (f.dead) continue;
+    if (segDist(f.x, f.y, a.x, a.y, b.x, b.y) < f.r * 1.05){
+      f.dead = true;
+      f.bomb ? hitBomb(f) : cut(f, ang, b.t);
+    }
+  }
+}
+function cut(f, ang, t){
+  combo = t - lastSliceT < 300 ? combo + 1 : 1;
+  lastSliceT = t;
+  score += 1;
+  if (combo >= 3){ score += 1; addText(`${combo} 連切！`, f.x, f.y - f.r, '#ffb627'); }
+  const nx = -Math.sin(ang), ny = Math.cos(ang);
+  for (const s of [-1, 1]){
+    pieces.push({ x:f.x, y:f.y, vx:f.vx * .6 + nx * s * 110, vy:Math.min(f.vy, 0) * .3 + ny * s * 110 - 80,
+      r:f.r, type:f.type, ang, side:s, rot:0, vr:s * (2 + Math.random() * 2), life:2.5 });
+  }
+  burst(f.x, f.y, f.type.flesh, 16, f.r);
+  updateHud();
+}
+function hitBomb(f){
+  burst(f.x, f.y, '#ffb627', 22, f.r * 1.4);
+  burst(f.x, f.y, '#555', 10, f.r);
+  addText('炸彈！ −1', f.x, f.y - f.r, '#ff4d5e');
+  flash = .35;
+  loseLife();
+}
+function loseLife(){
+  lives -= 1; updateHud();
+  if (lives <= 0) gameOver();
+}
+function burst(x, y, color, n, spread){
+  for (let i = 0; i < n; i++){
+    const a = Math.random() * Math.PI * 2, sp = spread * (2 + Math.random() * 5);
+    drops.push({ x, y, vx:Math.cos(a) * sp, vy:Math.sin(a) * sp - spread * 2, r:2 + Math.random() * 4, color, life:.6 + Math.random() * .4 });
+  }
+}
+function addText(text, x, y, color){ texts.push({ text, x, y, color, life:1 }); }
+
+/* ---------- input: touch / mouse ---------- */
+function localXY(e){ const r = cv.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; }
+cv.addEventListener('pointerdown', e => { pointerDown = true; blade.length = 0; const [x, y] = localXY(e); addBladePoint(x, y, performance.now()); });
+cv.addEventListener('pointermove', e => { if (!pointerDown) return; const [x, y] = localXY(e); addBladePoint(x, y, performance.now()); });
+const up = () => { pointerDown = false; if (mode === 'touch') blade.length = 0; };
+cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up); cv.addEventListener('pointerleave', up);
+
+/* ---------- camera + hand tracking ---------- */
+let landmarker = null, lastVideoTime = -1, stream = null;
+function setStatus(t){ $('#status').textContent = t; }
+
+async function startHand(){
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw Object.assign(new Error(), { name:'NoCamera' });
+  setStatus('正在開啟鏡頭…');
+  stream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:'user', width:{ ideal:640 }, height:{ ideal:480 } }, audio:false });
+  video.srcObject = stream;
+  await video.play();
+  if (!landmarker){
+    setStatus('正在載入手部模型（約 8 MB，第一次較久）…');
+    const vision = await import(`https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${MP_VER}`);
+    const files = await vision.FilesetResolver.forVisionTasks(`https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${MP_VER}/wasm`);
+    const opts = d => ({ baseOptions:{ modelAssetPath:MODEL, delegate:d }, runningMode:'VIDEO', numHands:1 });
+    try { landmarker = await vision.HandLandmarker.createFromOptions(files, opts('GPU')); }
+    catch { landmarker = await vision.HandLandmarker.createFromOptions(files, opts('CPU')); }
+  }
+  setStatus('');
+}
+function stopCamera(){ if (stream){ stream.getTracks().forEach(t => t.stop()); stream = null; } }
+
+function coverRect(){
+  const vw = video.videoWidth || 640, vh = video.videoHeight || 480;
+  const s = Math.max(W / vw, H / vh), dw = vw * s, dh = vh * s;
+  return { dw, dh, offX:(W - dw) / 2, offY:(H - dh) / 2 };
+}
+function detectHand(now){
+  if (!landmarker || video.readyState < 2 || video.currentTime === lastVideoTime) return;
+  lastVideoTime = video.currentTime;
+  const res = landmarker.detectForVideo(video, now);
+  const lm = res.landmarks && res.landmarks[0];
+  if (!lm){ handSeen = false; tip = null; blade.length = 0; return; }
+  handSeen = true;
+  const p = lm[8], { dw, dh, offX, offY } = coverRect();
+  const x = offX + (1 - p.x) * dw, y = offY + p.y * dh;
+  tip = tip ? { x:tip.x + (x - tip.x) * .6, y:tip.y + (y - tip.y) * .6 } : { x, y };
+  addBladePoint(tip.x, tip.y, now);
+}
+
+/* ---------- drawing ---------- */
+function drawBackground(){
+  if (mode === 'hand' && video.readyState >= 2){
+    const { dw, dh, offX, offY } = coverRect();
+    ctx.save(); ctx.translate(W, 0); ctx.scale(-1, 1);
+    ctx.drawImage(video, offX, offY, dw, dh); ctx.restore();
+    ctx.fillStyle = 'rgba(13,20,16,.5)'; ctx.fillRect(0, 0, W, H);
+  } else {
+    const g = ctx.createRadialGradient(W / 2, H * .35, 10, W / 2, H * .5, Math.max(W, H) * .8);
+    g.addColorStop(0, '#1d2e22'); g.addColorStop(1, '#0d1410');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  }
+}
+function drawFruit(f){
+  const { r, type } = f;
+  ctx.save(); ctx.translate(f.x, f.y); ctx.rotate(f.rot);
+  if (f.bomb){
+    ctx.fillStyle = '#26272b'; ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#ff4d5e'; ctx.lineWidth = 3; ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,.18)'; ctx.beginPath(); ctx.ellipse(-r * .35, -r * .35, r * .3, r * .18, -.6, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#c9a36a'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(0, -r); ctx.quadraticCurveTo(r * .3, -r * 1.35, r * .5, -r * 1.25); ctx.stroke();
+    ctx.fillStyle = Math.random() < .5 ? '#ffb627' : '#ff4d5e'; ctx.beginPath(); ctx.arc(r * .5, -r * 1.25, 4 + Math.random() * 3, 0, Math.PI * 2); ctx.fill();
+    ctx.restore(); return;
+  }
+  ctx.fillStyle = type.skin; ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.fill();
+  if (type.stripe){
+    ctx.save(); ctx.clip(); ctx.strokeStyle = type.stripe; ctx.lineWidth = r * .14;
+    for (const k of [-.6, -.2, .2, .6]){ ctx.beginPath(); ctx.ellipse(k * r, 0, r * .12, r * 1.1, 0, 0, Math.PI * 2); ctx.stroke(); }
+    ctx.restore();
+  }
+  ctx.fillStyle = 'rgba(255,255,255,.25)'; ctx.beginPath(); ctx.ellipse(-r * .35, -r * .38, r * .3, r * .17, -.6, 0, Math.PI * 2); ctx.fill();
+  if (type.leaf){
+    ctx.strokeStyle = '#5a3a1a'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(0, -r * .85); ctx.lineTo(r * .05, -r * 1.15); ctx.stroke();
+    ctx.fillStyle = '#3fbf5a'; ctx.beginPath(); ctx.ellipse(r * .22, -r * 1.05, r * .22, r * .1, -.4, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.restore();
+}
+function drawPiece(p){
+  const { r, type } = p;
+  ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.ang + p.rot);
+  const a0 = p.side > 0 ? 0 : Math.PI, a1 = a0 + Math.PI;
+  ctx.fillStyle = type.skin; ctx.beginPath(); ctx.arc(0, 0, r, a0, a1); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = type.flesh; ctx.beginPath(); ctx.arc(0, 0, r * .84, a0, a1); ctx.closePath(); ctx.fill();
+  if (type.seed){
+    ctx.fillStyle = type.seed;
+    for (let i = 0; i < 5; i++){ const a = a0 + Math.PI * (i + .5) / 5; ctx.beginPath(); ctx.ellipse(Math.cos(a) * r * .5, Math.sin(a) * r * .5, 2.5, 4, a, 0, Math.PI * 2); ctx.fill(); }
+  }
+  ctx.restore();
+}
+function drawBlade(now){
+  const pts = blade.filter(p => now - p.t < 140);
+  if (pts.length > 1){
+    ctx.save(); ctx.lineCap = 'round'; ctx.shadowColor = '#ffb627'; ctx.shadowBlur = 16;
+    for (let i = 1; i < pts.length; i++){
+      const k = i / pts.length;
+      ctx.strokeStyle = `rgba(255,255,255,${.25 + k * .75})`; ctx.lineWidth = 2 + k * 9;
+      ctx.beginPath(); ctx.moveTo(pts[i - 1].x, pts[i - 1].y); ctx.lineTo(pts[i].x, pts[i].y); ctx.stroke();
+    }
+    ctx.restore();
+  }
+  if (mode === 'hand' && tip){
+    ctx.strokeStyle = '#ffb627'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(tip.x, tip.y, 12, 0, Math.PI * 2); ctx.stroke();
+  }
+}
+
+/* ---------- loop ---------- */
+let last = performance.now(), hintUntil = 0;
+function frame(now){
+  const dt = Math.min(.033, (now - last) / 1000); last = now;
+  if (mode === 'hand') detectHand(now);
+  if (blade.length > 40) blade.splice(0, blade.length - 40);
+
+  if (running){
+    elapsed += dt; spawnT -= dt;
+    if (spawnT <= 0){ spawn(); spawnT = Math.max(.6, 1.5 - elapsed * .015) + Math.random() * .4; }
+  }
+  const g = grav();
+  for (const f of fruits){ f.vy += g * dt; f.x += f.vx * dt; f.y += f.vy * dt; f.rot += f.vr * dt; }
+  fruits = fruits.filter(f => {
+    if (f.dead) return false;
+    if (f.vy > 0 && f.y > H + f.r * 2){
+      if (!f.bomb && running){ addText('漏掉了', Math.min(W - 40, Math.max(40, f.x)), H - 60, '#9fb3a3'); loseLife(); }
+      return false;
+    }
+    return true;
+  });
+  for (const p of pieces){ p.vy += g * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.rot += p.vr * dt; p.life -= dt; }
+  pieces = pieces.filter(p => p.life > 0 && p.y < H + p.r * 3);
+  for (const d of drops){ d.vy += g * .8 * dt; d.x += d.vx * dt; d.y += d.vy * dt; d.life -= dt; }
+  drops = drops.filter(d => d.life > 0);
+  for (const t of texts){ t.y -= 40 * dt; t.life -= dt * .9; }
+  texts = texts.filter(t => t.life > 0);
+  flash = Math.max(0, flash - dt);
+
+  drawBackground();
+  for (const d of drops){ ctx.globalAlpha = Math.min(1, d.life * 1.5); ctx.fillStyle = d.color; ctx.beginPath(); ctx.arc(d.x, d.y, d.r, 0, Math.PI * 2); ctx.fill(); }
+  ctx.globalAlpha = 1;
+  pieces.forEach(drawPiece);
+  fruits.forEach(drawFruit);
+  drawBlade(now);
+  ctx.textAlign = 'center'; ctx.font = '900 22px "Noto Sans TC", system-ui, sans-serif';
+  for (const t of texts){ ctx.globalAlpha = Math.min(1, t.life * 2); ctx.fillStyle = t.color; ctx.fillText(t.text, t.x, t.y); }
+  ctx.globalAlpha = 1;
+  if (flash > 0){ ctx.fillStyle = `rgba(255,77,94,${flash})`; ctx.fillRect(0, 0, W, H); }
+  if (mode === 'hand' && running && !handSeen){
+    ctx.fillStyle = 'rgba(243,247,238,.85)'; ctx.font = '700 16px "Noto Sans TC", system-ui, sans-serif';
+    ctx.fillText('找不到手，請把手放進畫面', W / 2, H * .5);
+  }
+  $('#hint').style.opacity = running && now < hintUntil ? 1 : 0;
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+/* ---------- game state ---------- */
+function updateHud(){
+  $('#score').textContent = score;
+  [...$('#lives').children].forEach((el, i) => el.classList.toggle('lost', i >= lives));
+  $('#modeChip').textContent = mode === 'hand' ? '手勢模式' : '手指模式';
+}
+function startGame(){
+  fruits = []; pieces = []; drops = []; texts = []; blade.length = 0;
+  score = 0; lives = 3; elapsed = 0; spawnT = .8; combo = 0; flash = 0;
+  running = true;
+  $('#startOv').hidden = true; $('#overOv').hidden = true;
+  $('#hint').textContent = mode === 'hand' ? '伸出食指，快速揮過水果' : '手指快速滑過水果';
+  hintUntil = performance.now() + 4000;
+  updateHud();
+}
+function gameOver(){
+  running = false;
+  let best = score;
+  try { best = Math.max(score, +localStorage.getItem('fruitBest') || 0); localStorage.setItem('fruitBest', best); } catch {}
+  $('#finalScore').textContent = score;
+  $('#bestLine').textContent = `最高分 ${best}`;
+  setTimeout(() => { $('#overOv').hidden = false; }, 600);
+}
+
+$('#btnTouch').addEventListener('click', () => { stopCamera(); mode = 'touch'; startGame(); });
+$('#btnHand').addEventListener('click', async () => {
+  const btn = $('#btnHand'); btn.disabled = true;
+  try {
+    await startHand();
+    mode = 'hand'; startGame();
+  } catch (e) {
+    stopCamera();
+    const n = e && e.name;
+    if (n === 'NotAllowedError' || n === 'SecurityError' || n === 'NoCamera')
+      setStatus('無法使用鏡頭：權限被拒絕，或目前頁面不允許開鏡頭（例如在 Claude 內預覽）。請改用手指模式，或把這個 HTML 放到 HTTPS 網站開啟。');
+    else if (n === 'NotFoundError' || n === 'NotReadableError')
+      setStatus('找不到可用的鏡頭，或鏡頭正被其他 App 使用。');
+    else
+      setStatus('手部模型載入失敗，請確認網路可以連到 jsdelivr 與 Google 儲存空間後再試一次。');
+  } finally { btn.disabled = false; }
+});
+$('#btnAgain').addEventListener('click', startGame);
+$('#btnHome').addEventListener('click', () => { $('#overOv').hidden = true; $('#startOv').hidden = false; setStatus(''); });
+updateHud();
+</script>
+
+</body>
+</html>
