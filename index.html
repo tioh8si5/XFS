@@ -230,6 +230,50 @@ textarea:focus{outline:2px solid var(--gold);outline-offset:1px}
 .stop .st small{color:var(--muted);font-size:12px}
 .stop .tag{font-size:11px;letter-spacing:.15em;color:var(--gold)}
 .seals span.miss{border-style:dashed;opacity:.35}
+.scene{display:flex;flex-direction:column;gap:12px;cursor:pointer;padding-bottom:6px;outline:none}
+.stageTop{position:relative;min-height:34vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;border:1px solid var(--line);border-radius:2px;background:radial-gradient(60% 70% at 50% 55%,color-mix(in srgb,var(--sc) 35%,transparent),transparent 70%),repeating-linear-gradient(90deg,rgba(239,227,200,.03) 0 40px,transparent 40px 42px),var(--ink-2);overflow:hidden}
+.stageTop .place{position:absolute;top:10px;left:12px;font-size:12px;letter-spacing:.25em;color:var(--gold)}
+.bigFace{width:120px;height:120px;border-radius:8px;background:var(--sc);color:#fff8e6;display:grid;place-items:center;font-family:var(--display);font-weight:900;font-size:64px;transform:rotate(-4deg);box-shadow:0 0 0 4px rgba(16,20,31,.5),0 12px 40px rgba(0,0,0,.45);animation:faceIn .35s ease}
+.bigFace.narr{background:transparent;color:rgba(232,184,74,.35);border:3px dashed rgba(232,184,74,.35);box-shadow:none}
+.bigName{font-family:var(--display);font-weight:900;font-size:18px;letter-spacing:.2em;min-height:1.4em}
+@keyframes faceIn{from{opacity:0;transform:rotate(-4deg) scale(.85)}to{opacity:1;transform:rotate(-4deg) scale(1)}}
+@media (prefers-reduced-motion:reduce){.bigFace{animation:none}}
+.scene:focus-visible .line{outline:2px solid var(--gold);outline-offset:3px}
+.sceneDots{display:flex;gap:4px;justify-content:center}
+.sceneDots i{width:6px;height:6px;border-radius:50%;background:rgba(239,227,200,.2)}
+.sceneDots i.on{background:var(--gold)}
+.scene .line{background:var(--paper);color:var(--paper-ink);border-radius:2px;padding:16px 18px 18px;position:relative;animation:lineIn .28s ease}
+.scene .line::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--cinnabar)}
+.scene .line.narr{background:transparent;color:var(--paper);border:1px dashed var(--line);font-style:normal}
+.scene .line.narr::before{display:none}
+.scene .line.narr p{color:rgba(239,227,200,.85);font-size:15px}
+.scene .who{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.scene .face{width:44px;height:44px;border-radius:4px;color:#fff8e6;display:grid;place-items:center;font-family:var(--display);font-weight:900;font-size:22px;transform:rotate(-3deg);box-shadow:0 0 0 2px rgba(42,29,20,.25)}
+.scene .who b{font-family:var(--display);font-size:17px;letter-spacing:.1em}
+.scene .line p{font-size:17px;line-height:1.75}
+.sceneHint{text-align:right;color:var(--muted);font-size:13px}
+@keyframes lineIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.clue{border:1px solid var(--gold);border-radius:2px;padding:12px 14px;background:rgba(232,184,74,.08);font-size:14px}
+.clue .tag,.case .tag{display:block;font-size:12px;letter-spacing:.2em;color:var(--gold);margin-bottom:4px}
+.case{margin:0;padding-left:1.4em;display:flex;flex-direction:column;gap:10px;font-size:15px}
+.plaque.task{border-color:rgba(200,55,45,.5)}
+@media (prefers-reduced-motion:reduce){.scene .line{animation:none}}
+.script{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.script li{background:var(--paper);color:var(--paper-ink);border-radius:2px;padding:10px 14px;border-left:4px solid var(--cinnabar)}
+.script li b{font-family:var(--display);font-size:15px;letter-spacing:.1em;display:block;margin-bottom:2px}
+.script li p{font-size:15px;line-height:1.7}
+.script li.narr{background:transparent;color:rgba(239,227,200,.85);border:1px dashed var(--line);border-left-width:1px}
+.mozWrap{position:relative;border:1px solid var(--line);border-radius:2px;background:radial-gradient(70% 60% at 50% 40%,rgba(176,74,106,.18),transparent 70%),var(--ink-2);overflow:hidden;touch-action:manipulation}
+.mozWrap canvas{display:block;max-width:100%}
+.mozDir{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:2px;font-family:var(--display);font-weight:900;font-size:20px;letter-spacing:.15em;color:var(--gold);text-shadow:0 2px 10px rgba(0,0,0,.8);pointer-events:none;opacity:.9}
+.mozDir span{font-size:64px;line-height:1;animation:mozUD .6s ease-in-out infinite alternate}
+.mozDir.lr span{animation-name:mozLR}
+@keyframes mozUD{from{transform:translateY(-10px)}to{transform:translateY(10px)}}
+@keyframes mozLR{from{transform:translateX(-12px)}to{transform:translateX(12px)}}
+.mozStat{display:flex;justify-content:space-between;font-size:14px;font-variant-numeric:tabular-nums}
+.mozStat b{font-family:var(--display);font-size:22px;color:var(--gold)}
+.mozBtns{justify-content:center}
+@media (prefers-reduced-motion:reduce){.mozDir span{animation:none}}
 /* 拍照打卡 */
 #scan{position:fixed;inset:0;z-index:25;background:var(--ink)}
 #scan video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
@@ -331,6 +375,7 @@ textarea:focus{outline:2px solid var(--gold);outline-offset:1px}
     <div class="row">
       <button class="btn ghost" data-act="hub">關卡總覽</button>
       <button class="btn ghost" data-act="rules">玩法說明</button>
+      <button class="btn ghost" data-act="case">案情簿</button>
     </div>
     <div class="row">
       <button class="btn ghost" data-act="reset">重新開始</button>
@@ -372,10 +417,10 @@ const CFG = {
 // ================= 關卡資料 =================
 const L = [null,
 {
-  k:'bell', site:'開基臨水夫人媽廟', stamp:'臨', title:'蚊子大軍', type:'體感（搖鈴）', walk:{m:620,min:10,route:'從台文館往東南走，臨水夫人媽廟在建業街 16 號，可以開地圖導航。請在廟外進行關卡。'},
+  k:'bell', site:'開基臨水夫人媽廟', stamp:'臨', title:'蚊子大軍', type:'體感（照指示上下或左右搖）', walk:{m:620,min:10,route:'從台文館往東南走，臨水夫人媽廟在建業街 16 號，可以開地圖導航。請在廟外進行關卡。'},
   guide:'開基臨水夫人媽廟主祀臨水夫人，信眾多來這裡祈求生育和孩子平安。《小封神》第 10 回寫到這裡；許丙丁在中文改訂版還把臨水夫人身邊的十二婆姐一一列出姓名和職責，像註生婆姐、送子婆姐，反映當時臨水夫人信仰的興盛。',
   who:'臨水夫人', story:'府城午後一大群蚊子圍著臨水夫人，她連印都拿不穩。她借你們一只法鈴：用力搖手機，把蚊子通通趕走。',
-  hints:['手機握緊，上下左右用力搖。','一直搖不要停，畫面上的蚊子會越來越少。','沒反應的話，連點「搖鈴」按鈕也可以。'],
+  hints:['看畫面中間的箭頭：這一波要上下搖還是左右搖。','沒有蚊子的時候搖了不算，等牠們飛進來再搖。','手機直拿、用力搖一下就好；沒反應可以按下方的按鈕代替。'],
   reward:{digit:'1'},
   win:'臨水夫人蓋好印，抬頭看看天：「午後要下雷陣雨了，公文收好，快去孔廟找孔夫子。」'
 },
@@ -473,8 +518,8 @@ const DIGIT_LV = L.map((l, i) => l && l.reward.digit ? i : 0).filter(Boolean);
 const SC = lv => L[lv] && CFG.scan[L[lv].k];
 
 // ================= 狀態 =================
-const KEY = 'xfs_mvp_v5';
-const fresh = () => ({team:'', lv:0, ph:'go', digits:{}, items:[], hints:{}, start:0, end:0, steps:0, line:'', photos:{}, done:{}});
+const KEY = 'xfs_mvp_v6';
+const fresh = () => ({team:'', lv:0, ph:'go', digits:{}, items:[], hints:{}, start:0, end:0, steps:0, line:'', photos:{}, done:{}, scene:null});
 let S = fresh();
 let startPh = 'intro';
 try { const s = JSON.parse(localStorage.getItem(KEY)); if (s && typeof s.lv === 'number') S = Object.assign(fresh(), s); } catch(e){}
@@ -516,7 +561,7 @@ function onMotion(e){
   hasMotion = true;
   const now = performance.now();
   const mag = (a && a.x != null) ? Math.hypot(a.x, a.y, a.z) : Math.abs(Math.hypot(g.x, g.y, g.z) - 9.8);
-  if (K() === 'bell' && S.ph === 'play' && mag > 11 && now - lastBell > 220){ lastBell = now; bell(); }
+  mozMotion(e);
   if (mag > 14 && now - lastShake > 450){ lastShake = now; onShake(); }
   if (K() === 'walk' && g && g.x != null){
     const m = Math.hypot(g.x, g.y, g.z);
@@ -565,20 +610,260 @@ const PERM = {
   camera:{icon:'鏡', title:'要開啟鏡頭', why:'這一關要用鏡頭掃描現場的圖、顯示 AR 畫面。', list:['畫面只在你的手機上處理，不會錄影，也不會上傳','掃到圖的那一刻會拍一張照片，只存在這支手機，用在結局的相簿','離開這一關就會關閉鏡頭'], note:'按「開啟」後，瀏覽器會再跳出詢問，請按「允許」。不開也能玩：掃描會改成答題，AR 會顯示在深色背景上。', toast:'鏡頭開啟中：用於掃描與 AR，不錄影、不上傳'},
   mic:{icon:'音', title:'要使用麥克風', why:'這一關要偵測你們對手機吹氣的聲音大小。', list:['只判斷聲音大小，不會錄音，也不會上傳','吹完這一關就會關閉麥克風'], note:'按「開啟」後，瀏覽器會再跳出詢問，請按「允許」。不開也能玩：可以按住按鈕代替吹氣。', toast:'麥克風開啟中：只偵測音量，不錄音'},
 };
-const permSeen = {};
+const permSeen = {}, permNoLv = {};
 let toastTimer = 0;
 function toast(msg){ const t = $('#toast'); t.textContent = msg; t.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, 2800); }
 function needPerm(kind, ok, no){
   const c = PERM[kind];
   if (permSeen[kind] === 'ok'){ toast(c.toast); return ok(); }
+  if (permNoLv[kind] === S.lv) return no && no();
   $('#permIcon').textContent = c.icon; $('#permTitle').textContent = c.title; $('#permWhy').textContent = c.why;
   $('#permList').innerHTML = c.list.map(t => `<li>${esc(t)}</li>`).join(''); $('#permNote').textContent = c.note;
   $('#perm').hidden = false;
   $('#permOk').onclick = () => { $('#perm').hidden = true; permSeen[kind] = 'ok'; ok(); };
-  $('#permNo').onclick = () => { $('#perm').hidden = true; no && no(); };
+  $('#permNo').onclick = () => { $('#perm').hidden = true; permNoLv[kind] = S.lv; no && no(); };
   $('#permOk').focus();
 }
 const MOTION_K = ['bell', 'dice', 'lingyou', 'chikan', 'port'];
+
+// ================= 劇情演出 =================
+// 說話的人：頭像用的字、顏色
+const SPK = {
+  '旁白':{c:'', col:''},
+  '玉帝':{c:'玉', col:'#c9922c'}, '土地公':{c:'土', col:'#5f8f72'}, '???':{c:'？', col:'#6a6a6a'},
+  '臨水夫人':{c:'臨', col:'#b04a6a'}, '火燒婆姐':{c:'婆', col:'#d0662e'},
+  '孔子':{c:'孔', col:'#3f5f8a'}, '速報司爺':{c:'速', col:'#4a4a7a'}, '大上帝':{c:'北', col:'#2f4f6f'}, '龜將':{c:'龜', col:'#4f7a5a'},
+  '朝奉':{c:'當', col:'#7a5a3a'}, '小上帝':{c:'玄', col:'#3a6a8a'}, '魁星':{c:'魁', col:'#2f7a5a'}, '大聖':{c:'聖', col:'#b07a1a'},
+  '千里眼':{c:'千', col:'#3a7a3a'}, '順風耳':{c:'順', col:'#8a3a3a'}, '關公':{c:'關', col:'#a02a2a'},
+  '金魚仙':{c:'魚', col:'#d0482a'}, '風神':{c:'風', col:'#4a7a9a'}, '雷公':{c:'雷', col:'#6a4a9a'}, '驛使':{c:'驛', col:'#9a7a2a'},
+};
+const SCENES = {
+  open:[
+    ['玉帝','咳咳。天庭年終要清點府城眾神，這份公文要蓋齊八方大印，日落前送到接官亭的驛船。'],
+    ['土地公','報告玉帝，這種跑腿的事……'],
+    ['玉帝','交給新來的實習小神仙。土地公，你帶路。'],
+    ['土地公','（小聲）又是我。'],
+    ['土地公','各位小神仙，我是安海街的土地公，府城的大街小巷我最熟。走吧，蓋個印而已，能有多難？'],
+    ['旁白','遠處傳來一陣「咕嚕咕嚕」的笑聲，像有人在水裡偷笑。'],
+    ['土地公','……剛剛是誰在笑？算了，先看看任務說明，出發！'],
+  ],
+  bell_in:[
+    ['土地公','（整理衣領）咳，到臨水夫人這裡了。你們幫我看看，帽子有沒有戴正？'],
+    ['旁白','土地公一直偷偷往廟裡的婆姐們那邊瞄。'],
+    ['臨水夫人','是天庭的公文吧？我很想蓋，可是你們看——'],
+    ['旁白','一大群蚊子「嗡嗡嗡」圍著臨水夫人打轉，她連印都拿不穩。'],
+    ['火燒婆姐','怪了，今天的蚊子特別多，全是從後面那條水溝飛出來的。'],
+    ['土地公','火、火燒婆姐好！我、我來幫忙趕！'],
+    ['臨水夫人','土地公你站遠一點就好。小神仙，法鈴借你們。'],
+  ],
+  bell_win:[
+    ['臨水夫人','清靜多了，印蓋好了。'],
+    ['火燒婆姐','對了，我在那條水溝裡撿到這個，給你們。'],
+    ['旁白','一片金紅色、亮晶晶的魚鱗。'],
+    ['土地公','魚鱗？府城的蚊子什麼時候會掉魚鱗了？'],
+    ['臨水夫人','（抬頭看天）午後要下雷陣雨了，公文收好，快去孔廟。'],
+  ],
+  fill_in:[
+    ['旁白','天空忽然烏雲密布，一陣雷陣雨不偏不倚，只淋在你們頭上。'],
+    ['土地公','奇怪，整條街都沒下雨，怎麼只下我們這裡？'],
+    ['孔子','何人騎馬闖入孔廟？'],
+    ['土地公','歹勢歹勢！孔夫子，他們是新來的，騎天馬騎習慣了。'],
+    ['孔子','先去看門口那塊碑。看懂了，再談蓋印。'],
+  ],
+  fill_win:[
+    ['孔子','文武官員軍民人等，至此下馬。規矩記住了。'],
+    ['孔子','不過剛才那場雨下得蹊蹺。老夫看見雲裡有條尾巴，一擺一擺的，像魚。'],
+    ['土地公','又是魚？'],
+    ['孔子','往北走會經過重慶寺。速報司爺專管報應，這種惡作劇，可以去告他一狀。'],
+  ],
+  vinegar_in:[
+    ['速報司爺','（翻著厚厚的簿子）下一位。什麼事？'],
+    ['土地公','報告速報司爺，有人一路放蚊子、下怪雨，捉弄送公文的小神仙！'],
+    ['速報司爺','放蚊子、下怪雨……（簿子翻得嘩嘩響）嗯，這筆帳記得到。不過，你們先幫我個忙。'],
+    ['速報司爺','這只醋矸放太久，醋都沉底了。幫我攪一攪，輕輕的，別灑出來。'],
+    ['土地公','（小聲）這醋矸很有名喔，聽說攪一攪，第三者就會被攪走。'],
+    ['速報司爺','土地公，你要是有心上人，自己來攪。'],
+    ['土地公','我、我沒有啦！'],
+  ],
+  vinegar_win:[
+    ['速報司爺','醋香正好。（提筆）「怪風怪雨擾亂公文，速報。」記上了。'],
+    ['速報司爺','作惡的，報應來得快。你們等著看就好。'],
+    ['旁白','簿子上的墨跡一閃，遠處好像有什麼東西打了個噴嚏。'],
+  ],
+  north_in:[
+    ['大上帝','……我是誰？我在哪？'],
+    ['土地公','大上帝！您怎麼了？'],
+    ['大上帝','剛才一聲悶雷打在屋頂，震得我頭昏腦脹，什麼都想不起來。'],
+    ['土地公','這雷也打得太巧了吧……'],
+    ['大上帝','小神仙，幫我想起來，我才能蓋印。'],
+  ],
+  north_win:[
+    ['大上帝','想起來了！北方之神，腳踏龜蛇二將，正是本座。'],
+    ['龜將','（慢吞吞地）報……告……打雷的時候，我看見一隻金魚躲在雲裡偷笑。'],
+    ['大上帝','還有一件事。我那小老弟的通天冠，到現在還押在打銀街的當鋪。沒戴冠，他蓋不了官印。'],
+    ['土地公','又當掉了？這已經是第幾次……'],
+  ],
+  pawn_in:[
+    ['朝奉','歡迎光臨同裕當鋪……喔不，現在是銀行了。不過老規矩還在：有當票才能贖。'],
+    ['土地公','當票在這！咦……地址怎麼被雨淋糊了？'],
+    ['朝奉','地址對不上，東西不能給。你們看看門牌吧。'],
+    ['朝奉','（壓低聲音）說到這個，昨天有個穿金紅袍子、嘴巴一張一合的客人，也想來贖通天冠，被我趕出去了。'],
+    ['土地公','金紅袍子，嘴巴一張一合……'],
+  ],
+  pawn_win:[
+    ['朝奉','「贖」字蓋好，通天冠請收。'],
+    ['朝奉','那位客人臨走前說：「沒冠就蓋不了印，公文就送不到，嘻嘻。」聲音咕嚕咕嚕的，像在水裡講話。'],
+    ['土地公','咕嚕咕嚕……出發的時候，我好像聽過這個笑聲。'],
+  ],
+  lingyou_in:[
+    ['小上帝','我的冠！你們贖回來了？太好了，快給我——'],
+    ['旁白','通天冠才剛遞出去，一陣怪風「呼」地把它捲上半空。'],
+    ['小上帝','哎呀！沒戴冠，我不能蓋官印啦！'],
+    ['土地公','這風怎麼專挑我們吹……'],
+    ['小上帝','廟這裡藏著一張符咒圖，用手機掃到它，就看得見風把冠吹去哪了。'],
+  ],
+  lingyou_win:[
+    ['小上帝','（戴好冠，對著水缸照了照）還是戴冠比較帥。印給你們。'],
+    ['小上帝','剛才冠飛走的時候，我看見風裡夾著一片亮亮的東西。'],
+    ['旁白','又是一片金魚鱗。'],
+    ['小上帝','赤崁樓那邊好像吵起來了，有人被綁。你們先休息一下再過去吧。'],
+  ],
+  chikan_in:[
+    ['旁白','大士殿前圍了一圈人。魁星爺被捆仙索綁得像顆粽子，吊在半空中。'],
+    ['魁星','放我下來！我是魁星，不是千里眼！'],
+    ['土地公','是誰綁你的？'],
+    ['魁星','一個穿金紅袍子的傢伙跑去告狀，說千里眼偷了東西，還指著我說：「就是他。」'],
+    ['土地公','歷史重演……九十幾年前就綁錯過一次了。'],
+  ],
+  chikan_win:[
+    ['魁星','（伸伸懶腰）筆在手，斗在腳，這才是我。'],
+    ['魁星','綁我的那傢伙臨走前說，要去萬福庵找大聖「借個東西」。你們快去。'],
+  ],
+  code_in:[
+    ['大聖','哎呀呀，來得正好。俺剛把印鎖進寶箱，就有個咕嚕咕嚕的傢伙來借。俺不借，他就把俺的密碼……'],
+    ['大聖','……俺自己也忘了。'],
+    ['土地公','大聖，您可是七十二變的齊天大聖耶。'],
+    ['大聖','七十二變裡，沒有一變叫記密碼。'],
+    ['大聖','俺只記得，密碼是《小封神》開始連載的那一年。看看你們一路收集的數字吧。'],
+  ],
+  code_win:[
+    ['大聖','開了開了！印給你們。'],
+    ['大聖','那傢伙被俺一棒嚇跑，掉了這個。'],
+    ['旁白','第三片金魚鱗，比前兩片都大。'],
+    ['大聖','他往媽祖廟跑了。那兩位將軍，眼睛耳朵最靈，去問問。'],
+  ],
+  dice_in:[
+    ['千里眼','我看見了！看見你們從萬福庵一路跑過來！'],
+    ['順風耳','我聽見了！聽見你們在找一條金魚！'],
+    ['關公','（撫鬚）兩位將軍知道下落，但要先賭一把才肯說。關某在此公證，誰也不許作弊。'],
+    ['千里眼','十八仔，三戰兩勝。贏了，媽祖的印給你們，消息也告訴你們。'],
+  ],
+  dice_win:[
+    ['千里眼','輸了輸了。那條金魚，是九十幾年前就在府城鬧事的金魚仙！'],
+    ['順風耳','我聽見他說，要用一陣怪風把驛船擋在海上，讓公文送不出去。這樣玉帝清點的時候，就沒人會發現……'],
+    ['千里眼','……發現他根本沒在天庭登記！他是黑戶神仙！'],
+    ['土地公','難怪他怕被清點！快，去接官亭！'],
+  ],
+  port_in:[
+    ['旁白','舊港口的接官亭前，海風忽然停了。遠處的天庭驛船帆垂得軟趴趴的，一動也不動。'],
+    ['金魚仙','（從石坊後探出頭）咕嚕咕嚕，來不及了吧？沒有風，船進不來！'],
+    ['土地公','金魚仙！果然是你！'],
+    ['金魚仙','我還把公文封面撕成九塊了，嘻嘻，看你們怎麼交！'],
+    ['風神','（打了個大哈欠）誰在吵……我睡過頭了嗎？'],
+    ['土地公','風神！快颳風啊！'],
+  ],
+  port_win:[
+    ['旁白','驛船乘著風神的大風進港。天庭驛使接過公文，對著上面的印點點頭。'],
+    ['金魚仙','不、不要清點我！'],
+    ['旁白','天空「轟」的一聲，一道雷不偏不倚，劈在金魚仙的尾巴上。'],
+    ['雷公','速報司的單子剛送到：擾亂公文，速報！'],
+    ['金魚仙','（尾巴焦了一塊）嗚嗚……我只是想一直留在府城玩嘛……'],
+    ['驛使','沒登記的，登記一下就好。從今天起，你是府城的「水溝巡察」，專門管蚊子。'],
+    ['土地公','好了好了，大家都有工作了。（從懷裡掏出一張紅帖子）那個……臨水夫人那邊，能不能幫我把這張喜帖交給火燒婆姐……'],
+    ['旁白','驛船揚帆離港。看來你們的實習，還沒有結束。'],
+  ],
+};
+// 案情簿：過關時記下的線索
+const CLUES = {
+  bell:'第一片金魚鱗：在蚊子飛出來的水溝裡撿到。',
+  fill:'孔子看見雷陣雨的雲裡，有一條一擺一擺的魚尾巴。',
+  vinegar:'速報司爺的報應簿：「怪風怪雨擾亂公文，速報。」',
+  north:'龜將看見一隻金魚躲在打雷的雲裡偷笑。',
+  pawn:'有個穿金紅袍子、說話咕嚕咕嚕的客人，想冒領通天冠。',
+  lingyou:'第二片金魚鱗：夾在吹走通天冠的怪風裡。',
+  chikan:'金紅袍子的傢伙冒名告狀，害魁星被綁，還說要去萬福庵借東西。',
+  code:'第三片金魚鱗：大聖一棒嚇跑他時掉的。',
+  dice:'真相：九十多年前就在府城鬧事的金魚仙，沒在天庭登記，怕被清點，想擋下公文。',
+};
+function playScene(key, lv, ph){
+  if (!SCENES[key]){ return goto(lv, ph); }
+  S.scene = {key, i:0, lv, ph};
+  goto(lv, 'scene');
+}
+function viewScene(){
+  const sc = S.scene; if (!sc) return '';
+  if (sc.all) return viewScript(sc);
+  const lines = SCENES[sc.key], [who, text] = lines[sc.i], sp = SPK[who] || {c:who[0], col:'#6a6a6a'};
+  const narr = who === '旁白';
+  const dots = lines.map((_, i) => `<i class="${i <= sc.i ? 'on' : ''}"></i>`).join('');
+  const lv = sc.lv, place = lv && L[lv] ? L[lv].site : '天庭・凌霄寶殿';
+  const big = narr ? (lv && L[lv] ? (L[lv].stamp || L[lv].badge) : '天') : sp.c;
+  const col = narr ? 'rgba(232,184,74,.35)' : sp.col;
+  return `<div class="scene" data-act="scene-next" role="button" tabindex="0" aria-label="點一下繼續">
+    <div class="stageTop" style="--sc:${col}">
+      <span class="place">${esc(place)}</span>
+      <span class="bigFace ${narr ? 'narr' : ''}" key="${sc.i}">${esc(big)}</span>
+      <span class="bigName">${narr ? '' : esc(who)}</span>
+    </div>
+    <div class="sceneDots">${dots}</div>
+    <div class="line ${narr ? 'narr' : ''}" key="${sc.i}">
+      ${narr ? '' : `<div class="who"><b style="color:${sp.col}">${esc(who)}</b></div>`}
+      <p>${esc(text)}</p>
+    </div>
+    <div class="sceneHint">${sc.i < lines.length - 1 ? '點一下繼續 ▸' : '點一下結束 ▸'}</div>
+  </div>
+  <div class="row"><button class="btn ghost" data-act="scene-all">翻開話本</button>${sc.i > 0 ? '<button class="btn ghost" data-act="scene-back">上一句</button>' : ''}</div>`;
+}
+// 翻開話本：一次攤開這一段的全部對話
+function viewScript(sc){
+  const lines = SCENES[sc.key], lv = sc.lv, place = lv && L[lv] ? L[lv].site : '天庭・凌霄寶殿';
+  const rows = lines.map(([who, text], i) => {
+    if (who === '旁白') return `<li class="narr"><p>${esc(text)}</p></li>`;
+    const sp = SPK[who] || {col:'#6a6a6a'};
+    return `<li><b style="color:${sp.col}">${esc(who)}</b><p>${esc(text)}</p></li>`;
+  }).join('');
+  return `<div class="eyebrow">話 本</div><h2>${esc(place)}</h2>
+  <p class="muted">這一段共 ${lines.length} 句，一次攤開來看。</p>
+  <ol class="script">${rows}</ol>
+  <button class="btn wide" data-act="scene-done">看完了，繼續</button>
+  <button class="btn ghost wide" data-act="scene-play">回到逐句播放</button>`;
+}
+function sceneStep(d){
+  const sc = S.scene; if (!sc) return;
+  const n = SCENES[sc.key].length;
+  if (d === 'done' || (d > 0 && sc.i >= n - 1)){ S.scene = null; return goto(sc.lv, sc.ph); }
+  sc.i = Math.max(0, sc.i + d); save(); T.keep = true; render();
+}
+function viewCase(){
+  const got = L.map((l, i) => l && S.done[i] && CLUES[l.k] ? {l, t:CLUES[l.k]} : null).filter(Boolean);
+  const scales = got.filter(g => g.t.includes('金魚鱗')).length;
+  return `<div class="eyebrow">案 情 簿</div><h2>一路的怪事</h2>
+  <p class="muted">每過一關，就會記下一條線索。目前找到 ${got.length} 條線索、${scales} 片金魚鱗。</p>
+  ${got.length ? `<ol class="case">${got.map(g => `<li><span class="tag">${esc(g.l.site)}</span>${esc(g.t)}</li>`).join('')}</ol>` : '<div class="plaque">還沒有線索。先去一站看看吧。</div>'}
+  <button class="btn wide" data-act="hub">回關卡總覽</button>`;
+}
+const TASKS = {
+  bell:'搖法鈴把蚊子趕走，讓臨水夫人蓋印。',
+  fill:'看懂孔廟門口的下馬碑，把淋糊的碑文還原。',
+  vinegar:'幫速報司爺把醋矸攪勻，請他記下這筆帳。',
+  north:'幫大上帝想起自己鎮守的方位，和腳下的龜蛇二將。',
+  pawn:'填回當票上的門牌號碼，蓋上「贖」字，贖回通天冠。',
+  lingyou:'掃描現場的符咒圖，找回被怪風吹走的通天冠。',
+  chikan:'解開捆仙索，再對照大士殿的神像，把魁星的姿勢喬回來。',
+  code:'用一路收集的數字，打開大聖的寶箱。',
+  dice:'跟千里眼賭十八仔，三戰兩勝，問出幕後黑手的下落。',
+  port:'拼回公文封面、請風神颳風、叫驛船進港，最後交出公文。',
+};
 
 // ================= 共用畫面 =================
 function topbar(){
@@ -619,7 +904,8 @@ function render(){
   topbar();
   if (!(T.lv === S.lv && T.ph === S.ph)) T = {lv:S.lv, ph:S.ph};
   let h = '';
-  if (S.lv === 0) h = S.ph === 'rules' ? viewRules() : S.ph === 'hub' ? viewHub() : viewIntro();
+  if (S.ph === 'scene') h = viewScene();
+  else if (S.lv === 0) h = S.ph === 'rules' ? viewRules() : S.ph === 'hub' ? viewHub() : S.ph === 'case' ? viewCase() : viewIntro();
   else if (S.lv > N) h = viewEnd();
   else {
     const l = L[S.lv];
@@ -629,6 +915,7 @@ function render(){
   app.innerHTML = h;
   if (S.ph === 'play2' && L[S.lv].scratch) initScratch();
   if (K() === 'vinegar' && S.ph === 'play') initJar();
+  if (K() === 'bell' && S.ph === 'play') initMoz();
   if (S.ph === 'pose') Pose.mount();
   if (K() === 'walk' && S.ph === 'play') updSteps();
   if (!keepScroll) scrollTo(0, 0);
@@ -655,7 +942,7 @@ function viewRules(){
     <section><h3>任務目標</h3><p>你們是送公文的實習小神仙。走訪府城各廟，幫神明解決麻煩，在公文上蓋齊 8 個印，最後到接官亭交給天庭驛船。</p></section>
     <section><h3>每一站的流程</h3><ol>
       <li>在「關卡總覽」選一站，照著路線說明走過去。</li>
-      <li>到了按「我們到了」，先看這站的介紹和故事。</li>
+      <li>到了按「我們到了」，先看這站的劇情對話：點一下看下一句，想一次看完就按「翻開話本」。接著看這站的介紹。</li>
       <li>按「開始挑戰」完成關卡，過關就會蓋印或拿到道具。</li>
       <li>過關後可以照建議前往下一站，或回總覽自己挑。</li>
     </ol></section>
@@ -702,7 +989,7 @@ function viewHub(){
   return `<div class="eyebrow">關 卡 總 覽</div><h2>已蓋 ${mainDone} / ${mainAll} 個印</h2>
   <p class="muted">照建議順序最順路，也可以點任何一站直接前往。已完成的關卡可以再玩一次，但不會重複計分。</p>
   <div class="hub">${items}</div>
-  <div class="row" style="margin-top:6px"><button class="btn ghost" data-act="rules">玩法說明</button>
+  <div class="row" style="margin-top:6px"><button class="btn ghost" data-act="case">案情簿</button><button class="btn ghost" data-act="rules">玩法說明</button>
   <button class="btn ghost" data-act="finish">${mainDone === mainAll ? '看結局' : '結束任務、看結局'}</button>
   <button class="btn ghost" data-act="finish-yes" id="finishYes" hidden>確定結束（還有 ${mainAll - mainDone} 個印沒蓋）</button></div>`;
 }
@@ -718,9 +1005,10 @@ function viewGo(l){
 function viewGuide(l){
   return `${head(l.site)}
   <div class="plaque"><span class="tag">解 說</span>${esc(l.guide)}</div>
-  <div class="talisman"><span class="who">${esc(l.who)}</span><p>${esc(l.story)}</p></div>
+  <div class="plaque task"><span class="tag">任 務</span>${esc(TASKS[l.k] || '')}</div>
   <div class="muted">玩法：${esc(l.type)}</div>
-  <button class="btn wide" data-act="begin">開始挑戰</button>`;
+  <div class="row"><button class="btn wide" data-act="begin" style="flex:1">開始挑戰</button></div>
+  <button class="btn ghost" data-act="replay-in">再看一次劇情</button>`;
 }
 
 function viewPlay(l){
@@ -734,16 +1022,13 @@ function viewPlay(l){
     <div class="msg" id="jarMsg">還差 3 圈</div>${hintBlock()}`;
   }
   if (K() === 'bell'){
-    T.n = T.n || 0;
-    const left = Math.max(0, CFG.bellShakes - T.n);
-    let bugs = '';
-    for (let i = 0; i < CFG.bellShakes; i++) bugs += `<i class="${i < T.n ? 'gone' : ''}">蚊</i>`;
-    return `${head('搖鈴')}
-    <div class="talisman"><span class="who">臨水夫人</span><p>用力搖手機當作搖法鈴，把蚊子全部趕走。</p></div>
-    <div class="bugs" id="bugs">${bugs}</div>
-    <div class="big" id="bellLeft">${left}</div>
-    <div class="muted" style="text-align:center;margin-top:-10px">隻蚊子還在飛</div>
-    <button class="btn wide" data-act="bell">搖鈴</button>${hintBlock()}`;
+    return `${head('搖鈴趕蚊')}
+    <div class="talisman"><span class="who">臨水夫人</span><p>蚊子會一波一波飛進來。看畫面的箭頭，照指示「上下搖」或「左右搖」手機，把牠們趕走。沒有蚊子的時候搖了不算。</p></div>
+    <div class="mozWrap"><canvas id="mozCv" aria-label="蚊子飛進畫面的動畫"></canvas><div class="mozDir" id="mozDir" hidden></div></div>
+    <div class="mozStat"><span><b id="mozGone">0</b> / ${CFG.bellShakes} 隻趕走</span><span id="mozOn">畫面上 0 隻</span></div>
+    <div class="msg" id="mozMsg">等蚊子飛進來……</div>
+    <div class="row mozBtns"><button class="btn ghost" data-act="moz" data-v="ud">⇅ 上下搖</button><button class="btn ghost" data-act="moz" data-v="lr">⇆ 左右搖</button></div>
+    <p class="muted" style="text-align:center">手機沒有反應時，可以按上面的按鈕代替搖。</p>${hintBlock()}`;
   }
   if (K() === 'walk'){
     return `${head('邊走邊玩')}
@@ -886,14 +1171,14 @@ function viewWrite(){
 
 function viewDone(l){
   const isDigit = DIGIT_LV.includes(S.lv) && !!S.digits[S.lv];
-  const nx = nextSuggest(S.lv), last = !nx;
+  const nx = K() === 'port' ? 0 : nextSuggest(S.lv), last = !nx;
   const label = l.mini ? `得到「${l.reward.item}」` : `蓋到「${l.stamp}」字印`;
   const sub = isDigit ? `印章邊上刻著數字「${S.digits[S.lv]}」，萬福庵的寶箱會用到。` : (l.mini ? '途中小站不蓋公文印，但這樣東西後面用得到。' : (l.reward.item ? `得到「${l.reward.item}」。` : ''));
   let next = '';
   if (!last){ const n = L[nx]; next = `<p class="muted">建議下一站：${esc(n.site)}${n.mini ? '（途中小站）' : ''}</p>`; }
   return `<div class="eyebrow">${lvLabel(S.lv)} · 過關</div><h2>${esc(l.title)}</h2>
   <div class="reward"><div class="seal">${esc(l.stamp || l.badge)}</div><div><b style="font-family:var(--display);font-size:18px">${esc(label)}</b><div class="muted">${esc(sub)}</div></div></div>
-  <div class="talisman"><span class="who">${esc(l.who)}</span><p>${esc(l.win)}</p></div>
+  ${CLUES[l.k] ? `<div class="clue"><span class="tag">案情簿新增一條線索</span>${esc(CLUES[l.k])}</div>` : ''}
   ${next}
   <button class="btn wide" data-act="next">${last ? '看結局' : '前往建議的下一站'}</button>
   <button class="btn ghost wide" data-act="hub">回關卡總覽</button>`;
@@ -911,6 +1196,7 @@ function viewEnd(){
   <div class="talisman"><span class="who">結局</span><p>${allMain ? esc(L[N].win) + '玉帝看完回報笑了好久，決定明年還要派你們跑腿。' : '公文上還有幾個印沒蓋齊，不過玉帝看了你們一路的回報，還是點點頭：「下次再補齊吧。」'}</p></div>
   ${S.line ? `<div class="plaque"><span class="tag">回條上的回報</span>${esc(S.line)}</div>` : ''}
   ${albumHTML()}
+  <button class="btn ghost" data-act="case">看案情簿</button>
   <div class="stats">
     <div><b>${fmt((S.end || Date.now()) - S.start)}</b><span>總時間</span></div>
     <div><b>${score}</b><span>分數</span></div>
@@ -946,7 +1232,7 @@ function grant(lv){
 function pass(){
   grant(S.lv); S.done[S.lv] = true;
   if (navigator.vibrate) navigator.vibrate([60, 40, 160]);
-  goto(S.lv, 'done');
+  playScene(K() + '_win', S.lv, 'done');
 }
 function begin(){
   const lv = S.lv;
@@ -1172,15 +1458,114 @@ function tickHold(){
 }
 
 // 第 2 關
-function bell(){
-  if (K() !== 'bell' || S.ph !== 'play') return;
-  T.n = (T.n || 0) + 1;
-  if (navigator.vibrate) navigator.vibrate(25);
-  const bugs = document.querySelectorAll('#bugs i');
-  if (bugs[T.n - 1]) bugs[T.n - 1].classList.add('gone');
-  const el = $('#bellLeft'); if (el) el.textContent = Math.max(0, CFG.bellShakes - T.n);
-  if (T.n >= CFG.bellShakes && !T.doneSet){ T.doneSet = true; setTimeout(pass, 500); }
+// ================= 搖鈴趕蚊：蚊子動畫 =================
+const MOZ_PER_SHAKE = 2;
+function initMoz(){
+  const cv = $('#mozCv'); if (!cv) return;
+  const W = cv.parentNode.clientWidth, H = Math.round(W * .9), d = Math.min(devicePixelRatio || 1, 2);
+  cv.width = W * d; cv.height = H * d; cv.style.width = W + 'px'; cv.style.height = H + 'px';
+  cv.getContext('2d').setTransform(d, 0, 0, d, 0, 0);
+  if (!T.moz) T.moz = {list:[], spawned:0, gone:0, nextAt:performance.now() + 900, dir:null, lastWrong:0};
+  T.moz.W = W; T.moz.H = H;
+  mozUI();
 }
+function mozSpawn(now){
+  const m = T.moz, total = CFG.bellShakes;
+  if (m.spawned >= total) return;
+  const n = Math.min(total - m.spawned, 1 + Math.floor(Math.random() * 4));
+  for (let i = 0; i < n; i++){
+    const side = Math.floor(Math.random() * 4), W = m.W, H = m.H;
+    const sx = side === 0 ? -20 : side === 1 ? W + 20 : Math.random() * W;
+    const sy = side === 2 ? -20 : side === 3 ? H + 20 : Math.random() * H;
+    m.list.push({x:sx, y:sy, tx:W * (.2 + Math.random() * .6), ty:H * (.2 + Math.random() * .6), ph:Math.random() * 6.28, sp:.6 + Math.random() * .6, out:false, a:1});
+  }
+  m.spawned += n;
+  m.dir = Math.random() < .5 ? 'ud' : 'lr';
+  m.nextAt = now + 2600 + Math.random() * 2600;
+  const msg = $('#mozMsg'); if (msg){ msg.classList.remove('bad'); msg.textContent = `飛來 ${n} 隻！${m.dir === 'ud' ? '上下' : '左右'}搖！`; }
+  mozUI();
+}
+function mozUI(){
+  const m = T.moz; if (!m) return;
+  const on = m.list.filter(z => !z.out).length;
+  const g = $('#mozGone'); if (g) g.textContent = m.gone;
+  const o = $('#mozOn'); if (o) o.textContent = `畫面上 ${on} 隻`;
+  const dEl = $('#mozDir');
+  if (dEl){
+    if (on && m.dir){ dEl.hidden = false; dEl.className = 'mozDir ' + m.dir; dEl.innerHTML = m.dir === 'ud' ? '<span>⇅</span>上下搖' : '<span>⇆</span>左右搖'; }
+    else dEl.hidden = true;
+  }
+}
+function mozShake(dir){
+  if (K() !== 'bell' || S.ph !== 'play' || !T.moz) return;
+  const m = T.moz, now = performance.now(), msg = $('#mozMsg');
+  const on = m.list.filter(z => !z.out);
+  if (!on.length){ if (msg){ msg.textContent = m.gone >= CFG.bellShakes ? '全部趕走了！' : '現在沒有蚊子，搖了不算，等牠們飛進來。'; msg.classList.remove('bad'); } return; }
+  if (dir !== m.dir){
+    if (now - m.lastWrong > 600 && msg){ m.lastWrong = now; msg.textContent = `方向不對！這一波要${m.dir === 'ud' ? '上下' : '左右'}搖。`; msg.classList.add('bad'); }
+    return;
+  }
+  const k = Math.min(MOZ_PER_SHAKE, on.length);
+  for (let i = 0; i < k; i++){
+    const z = on[i]; z.out = true;
+    z.vx = (dir === 'lr' ? (z.x < m.W / 2 ? -1 : 1) : (Math.random() - .5) * .6) * 9;
+    z.vy = (dir === 'ud' ? (z.y < m.H / 2 ? -1 : 1) : (Math.random() - .5) * .6) * 9;
+    m.gone++;
+  }
+  if (navigator.vibrate) navigator.vibrate(30);
+  if (msg){ msg.classList.remove('bad'); msg.textContent = m.gone >= CFG.bellShakes ? '全部趕走了！' : `趕走 ${k} 隻！`; }
+  mozUI();
+  if (m.gone >= CFG.bellShakes && !T.doneSet){ T.doneSet = true; setTimeout(pass, 900); }
+}
+function drawMoz(x, z, t){
+  const flap = Math.sin(t * .06 + z.ph) * .9;
+  x.save(); x.translate(z.x, z.y); x.scale(1.8, 1.8); x.globalAlpha = Math.max(0, z.a);
+  x.fillStyle = 'rgba(220,235,255,.55)';
+  x.beginPath(); x.ellipse(-4, -5, 7, Math.max(.5, 3 + flap * 2), -.6, 0, 7); x.fill();
+  x.beginPath(); x.ellipse(4, -5, 7, Math.max(.5, 3 - flap * 2), .6, 0, 7); x.fill();
+  x.strokeStyle = '#d8d0c0'; x.lineWidth = 1.2;
+  for (const sg of [-1, 1]) for (let i = 0; i < 3; i++){ x.beginPath(); x.moveTo(0, 0); x.lineTo(sg * (6 + i * 2), 6 + i * 3); x.stroke(); }
+  x.fillStyle = '#c8c0b0'; x.beginPath(); x.ellipse(0, 2, 2.6, 7, 0, 0, 7); x.fill();
+  x.fillStyle = '#e88a80'; x.beginPath(); x.arc(0, -6, 2.6, 0, 7); x.fill();
+  x.strokeStyle = '#d8d0c0'; x.beginPath(); x.moveTo(0, -8); x.lineTo(0, -15); x.stroke();
+  x.restore();
+}
+function tickMoz(t){
+  if (K() !== 'bell' || S.ph !== 'play' || !T.moz) return;
+  const cv = $('#mozCv'); if (!cv) return;
+  const m = T.moz, x = cv.getContext('2d'), now = performance.now();
+  const onN = m.list.filter(z => !z.out).length;
+  if (m.spawned < CFG.bellShakes && ((now >= m.nextAt && onN === 0) || (now >= m.nextAt + 4000 && onN < 6))) mozSpawn(now);
+  x.clearRect(0, 0, m.W, m.H);
+  x.strokeStyle = 'rgba(239,227,200,.06)'; x.lineWidth = 1;
+  for (let i = 1; i < 6; i++){ x.beginPath(); x.moveTo(0, m.H * i / 6); x.lineTo(m.W, m.H * i / 6); x.stroke(); }
+  for (const z of m.list){
+    if (z.out){ z.x += z.vx; z.y += z.vy; z.a -= .03; }
+    else {
+      z.x += (z.tx - z.x) * .03 * z.sp + Math.sin(t * .01 + z.ph) * 1.4;
+      z.y += (z.ty - z.y) * .03 * z.sp + Math.cos(t * .013 + z.ph) * 1.2;
+      if (Math.random() < .01){ z.tx = m.W * (.15 + Math.random() * .7); z.ty = m.H * (.15 + Math.random() * .7); }
+    }
+    if (z.a > 0) drawMoz(x, z, t);
+  }
+  m.list = m.list.filter(z => z.a > 0);
+}
+// 判斷搖晃方向：手機直拿時，x 軸是左右、y 軸是上下
+let gEst = null, lastMozShake = 0;
+function mozMotion(e){
+  if (K() !== 'bell' || S.ph !== 'play') return;
+  let ax, ay;
+  if (e.acceleration && e.acceleration.x != null){ ax = e.acceleration.x; ay = e.acceleration.y; }
+  else {
+    const g = e.accelerationIncludingGravity; if (!g || g.x == null) return;
+    if (!gEst) gEst = {x:g.x, y:g.y};
+    gEst.x = gEst.x * .9 + g.x * .1; gEst.y = gEst.y * .9 + g.y * .1;
+    ax = g.x - gEst.x; ay = g.y - gEst.y;
+  }
+  const now = performance.now(), ma = Math.max(Math.abs(ax), Math.abs(ay));
+  if (ma > 10 && now - lastMozShake > 350){ lastMozShake = now; mozShake(Math.abs(ax) > Math.abs(ay) ? 'lr' : 'ud'); }
+}
+
 // 第 3 關
 let stepSaveAt = 0;
 function addSteps(n){
@@ -1575,7 +1960,7 @@ const Pose = (() => {
   return {mount, autoOne};
 })();
 
-function tick(t){ tickNorth(); tickBlow(t); tickScan(); tickHold(); }
+function tick(t){ tickNorth(); tickBlow(t); tickScan(); tickHold(); tickMoz(t); }
 
 // ================= AR =================
 const cv = $('#cv'), ctx = cv.getContext('2d');
@@ -1773,7 +2158,7 @@ function frame(t){
 }
 requestAnimationFrame(frame);
 
-document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.id === 'ans'){ e.preventDefault(); ask(); } });
+document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.id === 'ans'){ e.preventDefault(); ask(); } if ((e.key === 'Enter' || e.key === ' ') && e.target.classList && e.target.classList.contains('scene')){ e.preventDefault(); sceneStep(1); } });
 
 // ================= 選單 =================
 function openMenu(){ $('#resetYes').hidden = true; $('#menu').hidden = false; }
@@ -1787,17 +2172,24 @@ document.addEventListener('click', e => {
       S.team = ($('#team').value || '').trim() || '跑腿隊';
       S.start = Date.now(); S.end = 0;
       setTimeout(loadMind, 3000);
-      goto(0, 'rules'); break;
+      playScene('open', 0, 'rules'); break;
     }
+    case 'scene-next': sceneStep(1); break;
+    case 'scene-back': sceneStep(-1); break;
+    case 'scene-all': S.scene.all = true; save(); render(); break;
+    case 'scene-play': S.scene.all = false; save(); render(); break;
+    case 'scene-done': sceneStep('done'); break;
+    case 'replay-in': playScene(K() + '_in', S.lv, 'guide'); break;
+    case 'case': $('#menu').hidden = true; closeAR(); closeScan(); stopMic(); goto(0, 'case'); break;
     case 'rules': $('#menu').hidden = true; closeAR(); closeScan(); stopMic(); goto(0, 'rules'); break;
     case 'hub': $('#menu').hidden = true; closeAR(); closeScan(); stopMic(); goto(0, 'hub'); break;
     case 'pick-lv': goto(+v, firstPh(+v)); break;
     case 'finish': { const y = $('#finishYes'); if (L.every((l, i) => !l || l.mini || S.done[i])) { S.end = S.end || Date.now(); goto(N + 1, 'end'); } else y.hidden = false; break; }
     case 'finish-yes': S.end = S.end || Date.now(); goto(N + 1, 'end'); break;
-    case 'arrive': goto(S.lv, 'guide'); break;
+    case 'arrive': playScene(K() + '_in', S.lv, 'guide'); break;
     case 'begin': begin(); break;
     case 'next': {
-      const nx = nextSuggest(S.lv);
+      const nx = K() === 'port' ? 0 : nextSuggest(S.lv);
       if (!nx){ S.end = S.end || Date.now(); goto(N + 1, 'end'); }
       else goto(nx, firstPh(nx));
       break;
@@ -1814,7 +2206,7 @@ document.addEventListener('click', e => {
     case 'pose-pass': pass(); break;
     case 'pose-ref': { const r = $('#poseRef'); r.hidden = !r.hidden; b.textContent = r.hidden ? '測試用：顯示神像照片' : '隱藏神像照片'; break; }
     case 'fill-clear': T.got = []; T.msg = ''; T.keep = true; render(); break;
-    case 'bell': bell(); break;
+    case 'moz': mozShake(v); break;
     case 'steps': addSteps(100); break;
     case 'arrive3': pass(); break;
     case 'north-skip': T.north = true; render(); break;
