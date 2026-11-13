@@ -416,6 +416,8 @@ const CFG = {
   northHold: 3,          // 第 4 關：要維持幾秒
   blowSeconds: 2,        // 第 9 關：累積吹氣秒數
   swingKuixing: 3,
+  inkSec: 5,            // 當鋪：墨珠要停在印章上累積幾秒
+  inkSpill: 15,         // 當鋪：手機斜超過幾度就會灑墨
   bladeSlashes: 6,      // 武廟：要斬幾刀
   swingWorm: 5,        // 第 9 關揮令旗次數
   levelScore: 100,
@@ -491,12 +493,12 @@ const L = [null,
   win:'大上帝想起來了，蓋上大印，嘆口氣：「我那個小老弟的通天冠，到現在還押在打銀街的當鋪裡。沒戴冠他不能蓋官印，你們順路去贖回來吧。」'
 },
 {
-  k:'pawn', mini:true, badge:'贖', site:'打銀街同裕當鋪舊址', title:'贖回通天冠', type:'迷你互動（填門牌＋蓋章）', walk:{m:270,min:5,route:'從北極殿往西走到忠義路，再往北走到忠義路二段 167 號。這裡是銀行大樓，請在騎樓旁集合，不要擋到出入口。'},
+  k:'pawn', mini:true, badge:'贖', site:'打銀街同裕當鋪舊址', title:'贖回通天冠', type:'迷你互動（填門牌＋端平印泥）', walk:{m:270,min:5,route:'從北極殿往西走到忠義路，再往北走到忠義路二段 167 號。這裡是銀行大樓，請在騎樓旁集合，不要擋到出入口。'},
   guide:'這裡是《小封神》裡康、趙二元帥典當通天冠的「同裕當鋪」所在地，屬於清代的打銀街一帶。許丙丁 24 歲加入的「桐侶吟社」也設在這裡，吟社的名字就取自「同裕」的諧音。日治時期這棟樓曾是臺灣產業金庫，之後一直是金融機構的大樓：當鋪後來變成了銀行。',
   who:'當鋪朝奉', story:'小上帝的通天冠還押在這裡！要贖回，得先出示當票。可是當票上的地址被雨淋糊了，看看這棟樓的門牌，把號碼填回去。',
   ask:{ q:'這棟樓的門牌是忠義路二段幾號？只填數字。', ok:['167'] },
   hints:['抬頭找這棟樓的門牌。','是三位數的門牌號碼。','門牌是 167 號。'],
-  hints2:['按住「贖」字印章按鈕不要放開。','大約兩秒就會蓋好。','中途放開就要重來，按穩一點。'],
+  hints2:['手機平放在掌心，像端著一碟墨，動作要小。','墨珠往哪邊滑，就把那一邊稍微抬高一點。','一直對不準，按「重新校正水平」，或直接用手指把墨珠拖到印章上。'],
   reward:{item:'贖回的通天冠'},
   win:'「贖」字一蓋，朝奉把通天冠捧了出來。快送回開基靈祐宮，小上帝沒戴冠可是不能蓋官印的。'
 },
@@ -580,7 +582,7 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':
 
 // ================= 感測器 =================
 let sensorsAsked = false, hasOri = false, hasMotion = false;
-let yawRaw = null, pitchRaw = 90, heading = null;
+let yawRaw = null, pitchRaw = 90, heading = null, tiltB = null, tiltG = null;
 function askSensors(){
   if (sensorsAsked) return;
   sensorsAsked = true;
@@ -600,6 +602,7 @@ function onOri(e){
   if (typeof e.webkitCompassHeading === 'number'){ yawRaw = e.webkitCompassHeading; heading = e.webkitCompassHeading; }
   else { yawRaw = 360 - e.alpha; if (e.absolute) heading = (360 - e.alpha) % 360; }
   pitchRaw = e.beta;
+  tiltB = e.beta; tiltG = e.gamma;
 }
 function onAbs(e){ if (e.alpha != null) heading = (360 - e.alpha) % 360; }
 let lastShake = 0, lastBell = 0, smooth = 9.8, stepUp = false, lastStep = 0;
@@ -689,7 +692,7 @@ function needPerm(kind, ok, no){
   $('#permNo').onclick = () => { $('#perm').hidden = true; permNoLv[kind] = S.lv; no && no(); };
   $('#permOk').focus();
 }
-const MOTION_K = ['bell', 'blade', 'dice', 'lingyou', 'chikan', 'port'];
+const MOTION_K = ['bell', 'pawn', 'blade', 'dice', 'lingyou', 'chikan', 'port'];
 
 // ================= 劇情演出 =================
 // 說話的人：頭像用的字、顏色
@@ -774,6 +777,7 @@ const SCENES = {
     ['朝奉','地址對不上，東西不能給。你們看看門牌吧。'],
     ['朝奉','（壓低聲音）說到這個，昨天有個穿金紅袍子、嘴巴一張一合的客人，也想來贖通天冠，被我趕出去了。'],
     ['土地公','金紅袍子，嘴巴一張一合……'],
+    ['朝奉','對了，贖當要蓋「贖」字章。這盒印泥是前清的古董，墨只剩一小灘，手一歪就灑了，端穩一點。'],
   ],
   pawn_win:[
     ['朝奉','「贖」字蓋好，通天冠請收。'],
@@ -937,7 +941,7 @@ const TASKS = {
   fill:'看懂孔廟門口的下馬碑，把淋糊的碑文還原。',
   vinegar:'幫速報司爺把醋矸攪勻，請他記下這筆帳。',
   north:'幫大上帝想起自己鎮守的方位，和腳下的龜蛇二將。',
-  pawn:'填回當票上的門牌號碼，蓋上「贖」字，贖回通天冠。',
+  pawn:'填回當票上的門牌號碼，再端平古董印泥，讓「贖」字章吸飽墨，贖回通天冠。',
   lingyou:'舉起手機轉身，用 AR 找回被怪風吹走的通天冠。',
   chikan:'解開捆仙索，再對照大士殿的神像，把魁星的姿勢喬回來。',
   code:'用一路收集的數字，打開大聖的寶箱。',
@@ -998,6 +1002,7 @@ function render(){
   if (K() === 'vinegar' && S.ph === 'play') initJar();
   if (K() === 'bell' && S.ph === 'play') initMoz();
   if (K() === 'blade' && S.ph === 'play') initBlade();
+  if (K() === 'pawn' && S.ph === 'play2') initInk();
   if (S.ph === 'pose') Pose.mount();
   if (K() === 'walk' && S.ph === 'play') updSteps();
   if (!keepScroll) scrollTo(0, 0);
@@ -1032,7 +1037,7 @@ function viewRules(){
     <section><h3>關卡玩法</h3><ul>
       <li>輸入答案：看現場的碑、門牌或神像，把答案打進去。</li>
       <li>對照刮除：用手指把「現場沒有的字」刮掉，刮到對的字會長回來。</li>
-      <li>體感：搖手機、揮手機、用手指畫圈。</li>
+      <li>體感：搖手機、揮手機、把手機端平、用手指畫圈。</li>
       <li>AR：舉起手機轉身，找神明或法寶。</li>
       <li>吹氣：對著手機麥克風吹氣喚風。</li>
     </ul></section>
@@ -1238,7 +1243,13 @@ function viewPose(l){
 }
 
 function viewTicket(l){
-  return `${head('蓋上贖字')}
+  return `${head('端平印泥')}
+  <div class="talisman"><span class="who">朝奉</span><p>手機平放在掌心，像端著一碟墨。微微調整手機的傾斜，讓墨珠停在「贖」字章上，章就會慢慢吸飽墨。斜太多，墨會灑出來。</p></div>
+  <div class="mozWrap"><canvas id="inkCv" aria-label="印泥盒：傾斜手機讓墨珠停在印章上" style="touch-action:none"></canvas></div>
+  <div class="bar"><i id="inkBar" style="width:${T.stamped ? 100 : 0}%"></i></div>
+  <div class="msg" id="inkMsg">${T.stamped ? '贖回了！' : '端平手機，等墨珠停下來……'}</div>
+  <div class="row" style="justify-content:center"><button class="btn ghost" data-act="ink-cal">重新校正水平</button></div>
+  <p class="muted" style="text-align:center">手機沒反應時，可以用手指把墨珠拖到印章上。</p>
   <div class="ticket" id="ticket">
     <div class="t-h">同裕當鋪　當票</div>
     <div class="t-row"><span>當物</span><b>通天冠一頂</b></div>
@@ -1246,9 +1257,7 @@ function viewTicket(l){
     <div class="t-row"><span>地址</span><b>打銀街（今忠義路二段 167 號）</b></div>
     <div class="t-row"><span>期限</span><b>逾期不贖，冠歸本號</b></div>
     <div class="t-stamp" id="tStamp" ${T.stamped ? '' : 'hidden'}>贖</div>
-  </div>
-  <button class="btn wide holdBtn" id="holdBtn" ${T.stamped ? 'disabled' : ''}><i id="holdFill"></i><span>按住蓋上「贖」字</span></button>
-  <div class="msg" id="holdMsg">${T.stamped ? '贖回了！' : '按住按鈕大約 2 秒。'}</div>${hintBlock()}`;
+  </div>${hintBlock()}`;
 }
 
 function viewBlow(){
@@ -2100,7 +2109,89 @@ const Pose = (() => {
   return {mount, autoOne};
 })();
 
-function tick(t){ tickNorth(); tickBlow(t); tickScan(); tickHold(); tickMoz(t); tickBlade(t); }
+function tick(t){ tickNorth(); tickBlow(t); tickScan(); tickHold(); tickMoz(t); tickBlade(t); tickInk(t); }
+
+// ================= 當鋪：端平印泥 =================
+// 手機平放時 beta≈0、gamma≈0。開始時先記下玩家手上的角度當作「水平」，之後看相對傾斜。
+function initInk(){
+  const cv = $('#inkCv'); if (!cv) return;
+  const W = cv.parentNode.clientWidth, H = Math.round(W * .82), d = Math.min(devicePixelRatio || 1, 2);
+  cv.width = W * d; cv.height = H * d; cv.style.width = W + 'px'; cv.style.height = H + 'px';
+  cv.getContext('2d').setTransform(d, 0, 0, d, 0, 0);
+  if (!T.ink) T.ink = {x:.75, y:-.55, vx:0, vy:0, fill:0, b0:null, g0:null, calAt:performance.now() + 500, last:0, drag:null, spill:0, wob:Math.random() * 6};
+  T.ink.W = W; T.ink.H = H;
+  const pos = e => { const r = cv.getBoundingClientRect(), R = Math.min(W, H) * .42; return {x:(e.clientX - r.left - W / 2) / R, y:(e.clientY - r.top - H / 2) / R}; };
+  cv.onpointerdown = e => { if (T.stamped) return; cv.setPointerCapture(e.pointerId); T.ink.drag = pos(e); };
+  cv.onpointermove = e => { if (T.ink.drag) T.ink.drag = pos(e); };
+  cv.onpointerup = cv.onpointercancel = () => { T.ink.drag = null; };
+}
+function inkCal(){ const k = T.ink; if (!k) return; k.b0 = null; k.g0 = null; k.calAt = performance.now() + 300; const m = $('#inkMsg'); if (m) m.textContent = '校正中，手機拿著別動……'; }
+function tickInk(t){
+  const k = T.ink, cv = $('#inkCv');
+  if (!k || !cv || K() !== 'pawn' || S.ph !== 'play2') return;
+  const dt = Math.min(.05, k.last ? (t - k.last) / 1000 : 0); k.last = t;
+  const W = k.W, H = k.H, cx = W / 2, cy = H / 2, R = Math.min(W, H) * .42, seal = .3;
+  let tb = 0, tg = 0, msg = null;
+  const sensor = tiltB != null && tiltG != null;
+  if (sensor && k.b0 == null && t >= k.calAt){ k.b0 = tiltB; k.g0 = tiltG; }
+  if (!T.stamped){
+    if (k.drag){
+      k.vx = (k.drag.x - k.x) * 6; k.vy = (k.drag.y - k.y) * 6;
+    } else if (sensor && k.b0 != null){
+      tb = tiltB - k.b0; tg = tiltG - k.g0;
+      // 傾斜讓墨珠往低處滑，再加一點點飄移，玩家得一直微調
+      const drift = .12 * Math.sin(t / 900 + k.wob), drift2 = .12 * Math.cos(t / 1300 + k.wob);
+      k.vx += (tg / 12 + drift) * dt * 3.2; k.vy += (tb / 12 + drift2) * dt * 3.2;
+      k.vx *= Math.pow(.25, dt); k.vy *= Math.pow(.25, dt);
+    } else if (!sensor){ msg = '偵測不到手機的水平，請用手指把墨珠拖到印章上。'; }
+    k.x += k.vx * dt; k.y += k.vy * dt;
+    const r = Math.hypot(k.x, k.y);
+    if (r > .9){ k.x *= .9 / r; k.y *= .9 / r; k.vx *= -.3; k.vy *= -.3; }
+    const tilt = Math.hypot(tb, tg), on = Math.hypot(k.x, k.y) < seal;
+    if (tilt > CFG.inkSpill){ k.fill = Math.max(0, k.fill - dt * .12); k.spill = t; msg = '斜太多了，墨灑出來了！慢慢放平。'; }
+    else if (on){ k.fill = Math.min(1, k.fill + dt / CFG.inkSec); if (navigator.vibrate && Math.random() < dt * 2) navigator.vibrate(8); msg = k.fill < 1 ? '對準了！印章在吸墨，保持住……' : null; }
+    else if (!msg) msg = sensor && k.b0 == null ? '校正中，手機拿著別動……' : '微調手機，讓墨珠滑到印章中間。';
+    if (k.fill >= 1){
+      T.stamped = true; msg = '贖回了！';
+      const st = $('#tStamp'); if (st) st.hidden = false;
+      if (navigator.vibrate) navigator.vibrate([80, 50, 200]);
+      setTimeout(() => { if (K() === 'pawn' && S.ph === 'play2') pass(); }, 1300);
+    }
+    const bar = $('#inkBar'); if (bar) bar.style.width = (k.fill * 100) + '%';
+    const m = $('#inkMsg'); if (m && msg && m.textContent !== msg){ m.textContent = msg; m.classList.toggle('bad', msg.startsWith('斜太多')); }
+  }
+  // 畫面
+  const c = cv.getContext('2d');
+  c.clearRect(0, 0, W, H);
+  // 印泥盒
+  const g = c.createRadialGradient(cx, cy, R * .2, cx, cy, R * 1.05);
+  g.addColorStop(0, '#f1e3c4'); g.addColorStop(1, '#c9b48a');
+  c.fillStyle = '#3a2a1e'; c.beginPath(); c.arc(cx, cy, R * 1.08, 0, 6.283); c.fill();
+  c.fillStyle = g; c.beginPath(); c.arc(cx, cy, R, 0, 6.283); c.fill();
+  if (t - k.spill < 600){ c.fillStyle = `rgba(178,34,34,${.25 * (1 - (t - k.spill) / 600)})`; c.beginPath(); c.arc(cx, cy, R, 0, 6.283); c.fill(); }
+  // 印章（由下往上吸飽墨）
+  const S2 = R * seal * 1.5;
+  c.save(); c.translate(cx, cy); c.rotate(-.06);
+  c.fillStyle = '#efe3c8'; c.fillRect(-S2 / 2, -S2 / 2, S2, S2);
+  c.save(); c.beginPath(); c.rect(-S2 / 2, S2 / 2 - S2 * k.fill, S2, S2 * k.fill); c.clip();
+  c.fillStyle = '#b8231d'; c.fillRect(-S2 / 2, -S2 / 2, S2, S2); c.restore();
+  c.strokeStyle = '#b8231d'; c.lineWidth = 3; c.strokeRect(-S2 / 2, -S2 / 2, S2, S2);
+  c.font = `900 ${Math.round(S2 * .62)}px "Noto Serif TC", serif`; c.textAlign = 'center'; c.textBaseline = 'middle';
+  c.fillStyle = k.fill > .5 ? '#efe3c8' : 'rgba(184,35,29,.55)'; c.fillText('贖', 0, S2 * .03);
+  c.restore();
+  // 目標圈
+  c.strokeStyle = 'rgba(184,35,29,.45)'; c.setLineDash([5, 5]); c.lineWidth = 1.5;
+  c.beginPath(); c.arc(cx, cy, R * seal, 0, 6.283); c.stroke(); c.setLineDash([]);
+  // 墨珠
+  if (!T.stamped){
+    const bx = cx + k.x * R, by = cy + k.y * R, br = Math.max(9, R * .1);
+    c.fillStyle = 'rgba(0,0,0,.18)'; c.beginPath(); c.ellipse(bx + 3, by + 4, br, br * .8, 0, 0, 6.283); c.fill();
+    const bg = c.createRadialGradient(bx - br * .35, by - br * .35, br * .1, bx, by, br);
+    bg.addColorStop(0, '#ff6b5b'); bg.addColorStop(1, '#8e1712');
+    c.fillStyle = bg; c.beginPath(); c.arc(bx, by, br, 0, 6.283); c.fill();
+    c.fillStyle = 'rgba(255,255,255,.6)'; c.beginPath(); c.arc(bx - br * .35, by - br * .35, br * .22, 0, 6.283); c.fill();
+  }
+}
 
 // ================= 武廟：揮刀斬風 =================
 function initBlade(){
@@ -2420,6 +2511,7 @@ document.addEventListener('click', e => {
     case 'feed': feed(); break;
     case 'swing': arSwing(); break;
     case 'slash': slash(); break;
+    case 'ink-cal': inkCal(); break;
     case 'ar-exit': closeAR(); render(); break;
     case 'scan-open': needPerm('camera', openScan, () => { T.ask = true; render(); }); break;
     case 'scan-exit': closeScan(); break;
