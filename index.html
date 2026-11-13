@@ -84,6 +84,21 @@ p{margin:0}
 
 /* 骰子：四、一點紅 */
 .dice{display:flex;gap:10px;justify-content:center}
+.dieBtn{background:none;border:0;padding:0;cursor:pointer;border-radius:10px}
+.dieBtn:not([disabled]) .die{box-shadow:0 4px 0 #b9a77f,0 0 0 2px var(--gold)}
+.dieBtn.flipped .die{box-shadow:0 4px 0 #b9a77f,0 0 0 3px var(--cinnabar)}
+.dieBtn[disabled]{cursor:default}
+.banks{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.bank{position:relative;border:1px solid var(--line);padding:8px 10px;border-radius:2px;overflow:hidden;display:flex;justify-content:space-between;align-items:baseline}
+.bank span{font-size:13px;color:var(--muted,#9aa)}
+.bank b{font-family:var(--display);font-size:22px;color:var(--gold);position:relative}
+.bank i{position:absolute;left:0;bottom:0;height:3px;background:var(--gold)}
+.betRow{display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap}
+.betRow .chip{min-width:52px;min-height:52px;width:52px;height:52px;padding:0;border-radius:50%;border:2px solid var(--gold);background:transparent;color:var(--gold);font-family:var(--display);font-weight:900;font-size:16px;cursor:pointer}
+.betRow .chip.on{background:var(--gold);color:var(--ink)}
+.betRow .chip[disabled]{opacity:.3;cursor:default}
+.duelRow{display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid var(--line);padding-bottom:4px}
+.duelRow b{font-family:var(--display);font-size:22px;color:var(--gold)}
 .die{width:58px;height:58px;background:var(--paper);border-radius:9px;display:grid;grid-template-columns:repeat(3,1fr);padding:7px;gap:2px;box-shadow:0 4px 0 #b9a77f}
 .die i{border-radius:50%}
 .die i.d{background:#1c1c1c}
@@ -109,6 +124,7 @@ p{margin:0}
 
 /* 拼圖 */
 .puzzle{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;max-width:300px;margin:0 auto;width:100%}
+.tileN{position:absolute;left:6px;top:4px;font-family:var(--body,sans-serif);font-size:12px;font-weight:600;opacity:.45;pointer-events:none}
 .tile{aspect-ratio:1;max-width:100%;background:var(--paper);color:var(--paper-ink);border:0;border-radius:2px;font-family:var(--display);font-weight:900;font-size:34px;cursor:pointer;position:relative}
 .tile::after{content:"";position:absolute;inset:6px;border:1px solid rgba(200,55,45,.25)}
 .tile.sel{background:var(--gold)}
@@ -202,6 +218,7 @@ textarea:focus{outline:2px solid var(--gold);outline-offset:1px}
 .t-row{display:flex;gap:12px;font-size:14px}
 .t-row span{color:rgba(42,29,20,.6);flex:none;width:3em}
 .t-row b{font-weight:600;min-width:0}
+.smudge{color:rgba(42,29,20,.35);filter:blur(1.5px);letter-spacing:.1em}
 .t-stamp{position:absolute;right:14px;top:50px;width:66px;height:66px;border:4px solid var(--cinnabar);color:var(--cinnabar);display:grid;place-items:center;font-family:var(--display);font-weight:900;font-size:40px;transform:rotate(-8deg);border-radius:6px;background:rgba(200,55,45,.06)}
 .holdBtn{position:relative;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none}
 .holdBtn i{position:absolute;left:0;top:0;bottom:0;width:0;background:rgba(232,184,74,.45)}
@@ -416,13 +433,21 @@ const CFG = {
   northHold: 3,          // 第 4 關：要維持幾秒
   blowSeconds: 2,        // 第 9 關：累積吹氣秒數
   swingKuixing: 3,
-  inkSec: 5,            // 當鋪：墨珠要停在印章上累積幾秒
-  inkSpill: 15,         // 當鋪：手機斜超過幾度就會灑墨
+  inkDrops: 14,         // 當鋪：印泥盒裡一開始有幾滴紅墨
+  inkNeed: 9,           // 當鋪：章要吸幾滴墨才算吸滿
+  inkWater: 4,          // 當鋪：混在裡面的魚缸水（碰到墨被沖掉一半）
+  inkChase: .12,        // 當鋪：魚缸水追著章跑的力道；越大追越快
+  inkRefill: 8,         // 當鋪：按「補充墨水」補幾滴
+  inkFast: 2.4,         // 當鋪：拖多快算太快（會把墨滴撞開）；數字越小越嚴
   bladeSlashes: 6,      // 武廟：要斬幾刀
+  diceBank: 100,        // 大天后宮：雙方一開始各有多少銅錢
+  betMin: 10, betMax: 50, betStep: 10,   // 大天后宮：每局可以下注的範圍
   swingWorm: 5,        // 第 9 關揮令旗次數
   levelScore: 100,
   hintCost: 30,
-  code: '1931',          // 第 7 關密碼
+  hairNeed: 10,         // 萬福庵：要吹出幾個分身才圍得住金魚仙
+  hairChunk: .5,        // 萬福庵：每吹氣幾秒變出一個分身
+  hairFish: 14,         // 萬福庵：金魚仙游到印旁邊要幾秒
   // 第 1 關補字：場勘後換成孔廟現場匾額上的字
   // ===== 開關卡（每站到了先解鎖）=====
   // gateScan：false＝一律答現場題；true＝有填 target 的站先用鏡頭掃現場的圖，掃不到再答題（沒填 target 的站照樣答題）
@@ -455,7 +480,7 @@ const L = [null,
   guide:'開基臨水夫人媽廟主祀臨水夫人，信眾多來這裡祈求生育和孩子平安。《小封神》第 10 回寫到這裡；許丙丁在中文改訂版還把臨水夫人身邊的十二婆姐一一列出姓名和職責，像註生婆姐、送子婆姐，反映當時臨水夫人信仰的興盛。',
   who:'臨水夫人', story:'府城午後一大群蚊子圍著臨水夫人，她連印都拿不穩。她借你們一只法鈴：用力搖手機，把蚊子通通趕走。',
   hints:['看畫面中間的箭頭：這一波要上下搖還是左右搖。','沒有蚊子的時候搖了不算，等牠們飛進來再搖。','手機直拿、用力搖一下就好；沒反應可以按下方的按鈕代替。'],
-  reward:{digit:'1'},
+  reward:{},
   win:'臨水夫人蓋好印，抬頭看看天：「午後要下雷陣雨了，公文收好，快去孔廟找孔夫子。」'
 },
 {
@@ -468,7 +493,7 @@ const L = [null,
     seq:'文武將官員士軍民商人等僧道至此轎下車馬行', keep:'文武官員軍民人等至此下馬', cols:4, rows:5, order:'vrtl', style:'stone', keepMsg:'碑上有這個字喔',
     done:'碑文清清楚楚地浮現：文武官員軍民人等至此下馬。' },
   hints2:['從右邊第一行開始，由上往下讀，對照碑上的字。','碑上寫的是文武官員、軍民人等，沒有提到商人、和尚或道士。','要刮掉的是：將、士、商、僧、道、轎、車、行。'],
-  reward:{digit:'9'},
+  reward:{},
   win:'孔子點點頭，蓋上大印：「規矩記住了就好。往北極殿的路上會經過重慶寺，那裡的速報司爺專管報應。一路捉弄你們的雷陣雨跟怪風，可以去告他一狀。」'
 },
 {
@@ -489,16 +514,16 @@ const L = [null,
     seq:'虎龜鹿蛇鶴龍', keep:'龜蛇', cols:3, rows:2, order:'grid', style:'wood', keepMsg:'神像腳下真的有牠喔',
     done:'大上帝腳下只剩龜和蛇：龜蛇二將歸位。' },
   hints2:['神像腳下有一隻有殼，一隻沒有腳。','把虎、鹿、鶴、龍刮掉。','留下龜和蛇，其他都刮掉。'],
-  reward:{digit:'3'},
+  reward:{},
   win:'大上帝想起來了，蓋上大印，嘆口氣：「我那個小老弟的通天冠，到現在還押在打銀街的當鋪裡。沒戴冠他不能蓋官印，你們順路去贖回來吧。」'
 },
 {
-  k:'pawn', mini:true, badge:'贖', site:'打銀街同裕當鋪舊址', title:'贖回通天冠', type:'迷你互動（填門牌＋端平印泥）', walk:{m:270,min:5,route:'從北極殿往西走到忠義路，再往北走到忠義路二段 167 號。這裡是銀行大樓，請在騎樓旁集合，不要擋到出入口。'},
+  k:'pawn', mini:true, badge:'贖', site:'打銀街同裕當鋪舊址', title:'贖回通天冠', type:'迷你互動（填門牌＋拖章吸墨）', walk:{m:270,min:5,route:'從北極殿往西走到忠義路，再往北走到忠義路二段 167 號。這裡是銀行大樓，請在騎樓旁集合，不要擋到出入口。'},
   guide:'這裡是《小封神》裡康、趙二元帥典當通天冠的「同裕當鋪」所在地，屬於清代的打銀街一帶。許丙丁 24 歲加入的「桐侶吟社」也設在這裡，吟社的名字就取自「同裕」的諧音。日治時期這棟樓曾是臺灣產業金庫，之後一直是金融機構的大樓：當鋪後來變成了銀行。',
   who:'當鋪朝奉', story:'小上帝的通天冠還押在這裡！要贖回，得先出示當票。可是當票上的地址被雨淋糊了，看看這棟樓的門牌，把號碼填回去。',
   ask:{ q:'這棟樓的門牌是忠義路二段幾號？只填數字。', ok:['167'] },
   hints:['抬頭找這棟樓的門牌。','是三位數的門牌號碼。','門牌是 167 號。'],
-  hints2:['手機平放在掌心，像端著一碟墨，動作要小。','墨珠往哪邊滑，就把那一邊稍微抬高一點。','一直對不準，按「重新校正水平」，或直接用手指把墨珠拖到印章上。'],
+  hints2:['按住「贖」字章，慢慢拖去碰紅色墨滴。','藍綠色的魚缸水會慢慢追著章跑，碰到墨會被沖掉一半；邊吸邊躲，或用力一甩把它撞出盒外（但墨滴也會被撞飛）。','拖太快會把墨滴撞出盒外；墨不夠就按「補充墨水」。'],
   reward:{item:'贖回的通天冠'},
   win:'「贖」字一蓋，朝奉把通天冠捧了出來。快送回開基靈祐宮，小上帝沒戴冠可是不能蓋官印的。'
 },
@@ -507,7 +532,7 @@ const L = [null,
   guide:'開基靈祐宮俗稱「小上帝廟」，也供奉玄天上帝。相傳康熙 37 年（1698），總鎮張玉麒渡海遇到風浪，夢見神明「披髮跣足」從桅桿降下才平安上岸，後來整修了這座廟。學者認為，這段傳說加上當時廟裡香火冷清，正是許丙丁讓小上帝窮到典當通天冠的靈感來源。',
   who:'小上帝', story:'你們把贖回的通天冠交給小上帝，他還來不及戴上，一陣怪風就把冠吹到半空中。「沒戴冠，我不能蓋官印啦！」轉身找到它，點一下收回來。',
   hints:['跟著畫面邊緣的金色箭頭轉身，通天冠在你們背後。','手機直拿，慢慢原地轉一圈。','看到金冠後直接點它；沒有動作感測器的話，用手指左右拖曳畫面。'],
-  reward:{digit:'1'},
+  reward:{},
   win:'小上帝戴好冠、蓋好印：「隔壁赤崁樓好像在吵架，好像有人被綁起來了……先去休息一下再過去吧。」'
 },
 {
@@ -517,15 +542,17 @@ const L = [null,
   hints3:['先看清楚：殿裡的魁星，毛筆拿在哪一隻手？點毛筆可以換手。','畫面上出現淡淡的虛線，就是正確姿勢的輪廓。','幫你把一個部位轉回去了。'],
   hints:['跟著畫面邊緣的金色箭頭轉身找魁星。','找到魁星後先點他，再用力揮手機，像甩鞭子一樣。','揮的時候快速來回一下算一次；沒反應可以按下方的按鈕。'],
   reward:{item:'魁星的簽名'},
-  win:'魁星爺伸伸懶腰，總算回到原樣，提筆簽名：「每次都綁我！萬福庵的大聖說要幫你們保管印章，結果把自己的寶箱密碼忘了。」'
+  win:'魁星爺伸伸懶腰，總算回到原樣，提筆簽名：「每次都綁我！那傢伙說要去萬福庵找大聖借東西，你們快去看看。」'
 },
 {
-  k:'code', site:'首貳境萬福庵', stamp:'聖', title:'大聖的寶箱', type:'解謎（密碼鎖）', walk:{m:200,min:3,route:'往民族路二段 317 巷走，萬福庵藏在巷子裡，廟前有一棵大樹。'},
+  k:'code', site:'首貳境萬福庵', stamp:'聖', title:'大聖的分身', type:'兩段式：猜舊廟名＋吹氣變分身', walk:{m:200,min:3,route:'往民族路二段 317 巷走，萬福庵藏在巷子裡，廟前有一棵大樹。'},
   guide:'萬福庵原本是鄭成功部將阮駿遺孀的居所，俗稱「阮夫人寺」，清嘉慶 8 年（1803）重建時改名萬福庵，現在主祀齊天大聖。廟前那棵樹長得像猴子爬樹，被信眾稱為「猴靈樹王公」。原著第 14 回〈孫大聖威震萬福庵〉就以這裡為舞台。',
-  who:'齊天大聖', story:'大聖抓抓頭：「我只記得密碼是《小封神》開始連載的那一年。」你們一路拿到的印章上各刻了一個數字，看看背包。',
-  hints:['看看背包裡的數字。','照拿到的順序排：臨水夫人、孔廟、北極殿、靈祐宮。','密碼是 1931。'],
+  who:'齊天大聖', story:'大聖先考你們這間廟的舊名，再拔一撮毫毛，要你們幫忙吹成分身，把來搶印的金魚仙團團圍住。',
+  riddle:{ q:'俺這間廟以前不叫萬福庵。你們把「萬福」兩個字念快一點、黏在一起念，聽起來像哪個字？', a:['萬','緩','阮','王'], ok:2 },
+  hints:['大聲念：萬福、萬福、萬福……越念越快。','這個字也是一個姓。鄭成功有一位部將就姓這個字。','答案是「阮」：這裡原本叫「阮夫人寺」。'],
+  hints2:['對著手機下方的麥克風用力吹氣，像吹蒲公英。','吹一陣停一下也可以，每吹一陣就多一個分身；分身越多，金魚仙越游不過來。','麥克風不能用的話，按住「按住代替吹氣」按鈕。'],
   reward:{item:'大聖的印'},
-  win:'寶箱打開了，大聖蓋好印：「最後兩關最麻煩，媽祖廟那兩位將軍不賭一把是不會蓋印的。」'
+  win:'大聖收回分身，蓋好印：「那條魚溜往武廟去了，還颳起一陣怪風。」'
 },
 {
   k:'blade', site:'祀典武廟', stamp:'關', title:'斬斷怪風', type:'體感（揮刀）', walk:{m:120,min:2,route:'從萬福庵回到永福路，祀典武廟就在路邊，紅色長牆很好認。請在廟外的騎樓或巷口進行關卡，不要在殿內揮手機。'},
@@ -533,24 +560,18 @@ const L = [null,
   who:'關公', story:'金魚仙一路颳的怪風捲到武廟，在紅牆前打轉，連關公讀《春秋》都不得安寧。關公把青龍偃月刀的刀氣借給你們：揮手機當大刀，把怪風斬斷。',
   hints:['手機握緊，像揮刀一樣用力往下劈或往旁邊砍。','揮一下停一下，連續亂揮只會算一刀。','沒反應的話，按「揮刀」按鈕也可以。'],
   reward:{item:'關公的印'},
-  win:'關公撫鬚蓋印：「歪風斬斷了。那條魚往媽祖廟逃了，去吧，關某隨後替你們公證。」'
+  win:'關公撫鬚蓋印：「歪風斬斷了，可那條魚往媽祖廟溜了。去吧，關某隨後替你們公證。」'
 },
 {
-  k:'dice', site:'祀典大天后宮', stamp:'媽', title:'不賭不蓋印', type:'體感（搖骰）', walk:{m:100,min:2,route:'從武廟旁的巷子往西走，就到大天后宮（永福路二段 227 巷）。請在廟埕進行關卡，不要在殿內搖手機。'},
-  guide:'祀典大天后宮主祀媽祖，媽祖身邊有千里眼、順風耳兩位將軍。原著裡，康、趙二元帥就在媽祖廟前跟他們賭「十八仔」。許丙丁小時候在大天后宮旁的私塾讀書，下課就在照牆前聽「講古」說書，這也許就是《小封神》的爭端從大天后宮開始的原因。',
-  who:'千里眼、順風耳', story:'媽祖的印由千里眼、順風耳保管，兩位將軍說：「贏我們三戰兩勝，就幫你們蓋。」關公也跟過來當公證，保證沒人作弊。',
-  hints:['手機握緊，像搖骰盅一樣上下用力搖。','沒反應的話，按「擲骰」按鈕也可以。','輸了可以再挑戰，十八仔本來就靠運氣。'],
-  reward:{item:'媽祖的印'},
-  win:'千里眼只好蓋印。順風耳把耳朵一豎：「快！天庭的驛船已經到舊港口的接官亭了，再晚就開走了！」'
-},
-{
-  k:'port', site:'接官亭・風神廟', stamp:'天', title:'趕上驛船', type:'拼圖＋喚風＋AR', walk:{m:780,min:13,route:'沿民權路往西走，過了西門路繼續往前，接官亭石坊在民權路三段 143 巷口，旁邊就是風神廟。'},
-  guide:'接官亭石坊建於清代，是當年官員從海上抵達府城時迎接的地方，旁邊就是風神廟。《小封神》裡，雷公就是在風神廟登場。',
-  who:'風神', story:'最後的麻煩一次來：一陣怪風把公文封面吹成九塊，驛船也因為沒風卡在海上。先拼回公文封面，再請風神吹風，把船叫進港。',
+  k:'dice', site:'祀典大天后宮（終點）', stamp:'媽', title:'最後一印', type:'翻骰＋拼圖＋喚風＋AR', walk:{m:100,min:2,route:'從武廟旁的巷子往西走，就到大天后宮（永福路二段 227 巷）。請在廟埕進行關卡，不要在殿內揮手機。'},
+  guide:'祀典大天后宮主祀媽祖，媽祖身邊有千里眼、順風耳兩位將軍。原著裡，康、趙二元帥就在媽祖廟前跟他們賭「十八仔」。許丙丁小時候在大天后宮旁的私塾讀書，下課就在照牆前聽「講古」說書，這也許就是《小封神》的爭端從大天后宮開始的原因。清代大天后宮離舊港口的水道不遠，船可以一路駛近府城。',
+  who:'千里眼、順風耳', story:'公文只差最後一個印：媽祖的印。先跟千里眼、順風耳賭十八仔，雙方各有 100 銅錢，每局自己選押多少，誰先輸光誰就輸。兩位將軍太靈，每局你們都會先輸，只能翻一顆骰子到背面來反敗為勝，關公在旁邊盯著。贏了之後，金魚仙會現身做最後的搗亂：拼回公文封面、請風神颳風、把天庭驛船叫到廟前，才能交出公文。',
   puzzle:'玉帝親啟府城眾神印',
-  hints:['第一個字是「玉」。','封面寫的是：要給玉帝親自打開，上面有府城眾神的印。','完整句子：玉帝親啟府城眾神印。'],
-  reward:{item:'送達回條'},
-  win:'驛使收下公文，對著滿滿九個印點點頭，在回條上寫下你們的回報。驛船乘著風神的風，往天上開走了。'
+  hints:['十八仔看的是「一對以外那兩顆」的點數和。先算對手幾點，再看你們差在哪。','翻面規則：1↔6、2↔5、3↔4。把不成對的小點數翻成大點數，或翻出一對，都可能翻盤。','有把握翻盤就押多一點，沒把握就押少一點；真的怎麼翻都贏不了，就按「跳過」，不輸錢。'],
+  hints2:['照格子上的小數字 1→9 讀：由左到右、由上到下，第一個字是「玉」。','封面寫的是：要給玉帝親自打開，上面有府城眾神的印。','完整句子：玉帝親啟府城眾神印。第一排「玉帝親」、第二排「啟府城」、第三排「眾神印」。'],
+  hints3:['對著手機下方的麥克風用力吹，累積幾秒就好；麥克風不能用就按住按鈕代替。','驛船會出現在你們身後，跟著畫面邊緣的金色箭頭轉身找。','找到驛船先點一下，再揮手機當令旗，像甩鞭子一樣。'],
+  reward:{item:'媽祖的印'},
+  win:'驛使收下蓋滿八個印的公文，連同你們的回條，乘著風神的風往天上開走了。'
 }];
 const N = L.length - 1;
 const K = () => (L[S.lv] && L[S.lv].k) || '';
@@ -568,7 +589,7 @@ function getTarget(k){
 }
 
 // ================= 狀態 =================
-const KEY = 'xfs_mvp_v8';
+const KEY = 'xfs_mvp_v10';
 const fresh = () => ({team:'', lv:0, ph:'go', digits:{}, items:[], hints:{}, start:0, end:0, steps:0, line:'', photos:{}, done:{}, open:{}, scene:null});
 let S = fresh();
 let startPh = 'intro';
@@ -623,7 +644,6 @@ function onMotion(e){
 }
 function onShake(){
   if (ar && ar.mode === 'swing') return arSwing();
-  if (K() === 'dice' && S.ph === 'play') roll();
   if (K() === 'blade' && S.ph === 'play') slash();
 }
 
@@ -658,7 +678,7 @@ function micLevel(){
 
 // ================= 開啟裝置前先告知 =================
 const PERM = {
-  motion:{icon:'動', title:'要使用動作感測器', why:'這一關要偵測手機的晃動和方向。', list:['搖鈴、搖骰、揮手機：判斷你有沒有用力晃手機','AR 關卡：轉身時讓畫面跟著轉','只在這個網頁裡即時計算，不會記錄或上傳'], note:'按「開啟」後，iPhone 會再跳出系統詢問，請按「允許」。不開也能玩，畫面上會有替代按鈕。', toast:'動作感測器開啟中'},
+  motion:{icon:'動', title:'要使用動作感測器', why:'這一關要偵測手機的晃動和方向。', list:['搖鈴、揮刀、揮令旗：判斷你有沒有用力晃手機','AR 關卡：轉身時讓畫面跟著轉','只在這個網頁裡即時計算，不會記錄或上傳'], note:'按「開啟」後，iPhone 會再跳出系統詢問，請按「允許」。不開也能玩，畫面上會有替代按鈕。', toast:'動作感測器開啟中'},
   camera:{icon:'鏡', title:'要開啟鏡頭', why:'這一步要用鏡頭掃描現場的圖，或顯示 AR 畫面。', list:['畫面只在你的手機上處理，不會錄影，也不會上傳','掃到圖的那一刻會拍一張照片，只存在這支手機，用在結局的相簿','離開這一關就會關閉鏡頭'], note:'按「開啟」後，瀏覽器會再跳出詢問，請按「允許」。不開也能玩：掃描會改成答現場題，AR 會顯示在深色背景上。', toast:'鏡頭開啟中：用於掃描與 AR，不錄影、不上傳'},
   mic:{icon:'音', title:'要使用麥克風', why:'這一關要偵測你們對手機吹氣的聲音大小。', list:['只判斷聲音大小，不會錄音，也不會上傳','吹完這一關就會關閉麥克風'], note:'按「開啟」後，瀏覽器會再跳出詢問，請按「允許」。不開也能玩：可以按住按鈕代替吹氣。', toast:'麥克風開啟中：只偵測音量，不錄音'},
 };
@@ -692,7 +712,7 @@ function needPerm(kind, ok, no){
   $('#permNo').onclick = () => { $('#perm').hidden = true; permNoLv[kind] = S.lv; no && no(); };
   $('#permOk').focus();
 }
-const MOTION_K = ['bell', 'pawn', 'blade', 'dice', 'lingyou', 'chikan', 'port'];
+const MOTION_K = ['bell', 'blade', 'lingyou', 'chikan'];   // 大天后宮的擲骰不用動作感測器；最後的 AR 前才詢問
 
 // ================= 劇情演出 =================
 // 說話的人：頭像用的字、顏色
@@ -707,7 +727,7 @@ const SPK = {
 };
 const SCENES = {
   open:[
-    ['玉帝','咳咳。天庭年終要清點府城眾神，這份公文要蓋齊九方大印，日落前送到接官亭的驛船。'],
+    ['玉帝','咳咳。天庭年終要清點府城眾神，這份公文要蓋齊八方大印，日落前交給天庭的驛船。'],
     ['土地公','報告玉帝，這種跑腿的事……'],
     ['玉帝','交給新來的實習小神仙。土地公，你帶路。'],
     ['土地公','（小聲）又是我。'],
@@ -777,7 +797,9 @@ const SCENES = {
     ['朝奉','地址對不上，東西不能給。你們看看門牌吧。'],
     ['朝奉','（壓低聲音）說到這個，昨天有個穿金紅袍子、嘴巴一張一合的客人，也想來贖通天冠，被我趕出去了。'],
     ['土地公','金紅袍子，嘴巴一張一合……'],
-    ['朝奉','對了，贖當要蓋「贖」字章。這盒印泥是前清的古董，墨只剩一小灘，手一歪就灑了，端穩一點。'],
+    ['朝奉','對了，贖當要蓋「贖」字章。可是印泥盒……唉，那位客人被趕出去前，往盒裡「噗噗」吐了幾口水。'],
+    ['土地公','這是……魚缸水？還在冒泡泡。'],
+    ['朝奉','墨都被沖散了。拿章慢慢去吸紅墨，千萬別沾到那幾滴水。'],
   ],
   pawn_win:[
     ['朝奉','「贖」字蓋好，通天冠請收。'],
@@ -809,16 +831,16 @@ const SCENES = {
     ['魁星','綁我的那傢伙臨走前說，要去萬福庵找大聖「借個東西」。你們快去。'],
   ],
   code_in:[
-    ['大聖','哎呀呀，來得正好。俺剛把印鎖進寶箱，就有個咕嚕咕嚕的傢伙來借。俺不借，他就把俺的密碼……'],
-    ['大聖','……俺自己也忘了。'],
-    ['土地公','大聖，您可是七十二變的齊天大聖耶。'],
-    ['大聖','七十二變裡，沒有一變叫記密碼。'],
-    ['大聖','俺只記得，密碼是《小封神》開始連載的那一年。看看你們一路收集的數字吧。'],
+    ['大聖','哎呀呀，來得正好。要蓋俺的印？先考考你們。'],
+    ['土地公','大聖，人家是來辦正事的……'],
+    ['大聖','俺這間廟，以前不叫萬福庵。猜得出舊名，才算是俺的朋友。'],
+    ['旁白','廟前的猴靈樹王公後面，一條金紅色的尾巴一閃而過。'],
   ],
   code_win:[
-    ['大聖','開了開了！印給你們。'],
-    ['大聖','那傢伙被俺一棒嚇跑，掉了這個。'],
+    ['大聖','圍住了！俺的毫毛分身，一根抵一個猴兵。'],
+    ['旁白','金魚仙「噗」地一扭，從分身腳邊鑽了出去，只留下一片亮晶晶的東西。'],
     ['旁白','第三片金魚鱗，比前兩片都大。'],
+    ['大聖','印給你們。'],
     ['大聖','他往武廟那邊跑了，還颳起一陣怪風。關老爺最討厭歪風，快去！'],
   ],
   blade_in:[
@@ -832,32 +854,27 @@ const SCENES = {
   blade_win:[
     ['旁白','最後一刀劈下，怪風「嘩」地散開，裡頭飄出一股魚腥味。'],
     ['關公','（撫鬚）哼，咕嚕咕嚕地往媽祖廟逃了。'],
-    ['關公','印給你們。那兩位將軍眼睛耳朵最靈，去問問。關某隨後就到，替你們公證。'],
+    ['關公','印給你們。媽祖的印是最後一個，那兩位將軍眼睛耳朵最靈，去問問。關某隨後就到，替你們公證。'],
     ['土地公','（小聲）有關老爺當公證，千里眼總不敢耍賴了吧……'],
   ],
   dice_in:[
     ['千里眼','我看見了！看見你們在武廟揮刀斬風！'],
-    ['順風耳','我聽見了！聽見你們在找一條金魚！'],
-    ['關公','（撫鬚）關某說到做到，在此公證。兩位將軍知道下落，但要先賭一把才肯說，誰也不許作弊。'],
-    ['千里眼','十八仔，三戰兩勝。贏了，媽祖的印給你們，消息也告訴你們。'],
+    ['順風耳','我聽見了！聽見有條金魚咕嚕咕嚕地躲進廟後的水溝！'],
+    ['關公','（撫鬚）關某說到做到，在此公證。媽祖的印是最後一個，兩位將軍要先賭一把才肯蓋，誰也不許作弊。'],
+    ['千里眼','十八仔，賭銅錢，誰先輸光誰就輸。把我們的銅錢贏光，媽祖的印給你們，那條金魚的底細也告訴你們。'],
+    ['順風耳','不過我們一個眼睛靈、一個耳朵靈，骰子怎麼滾都聽得見，你們搖不贏的。'],
+    ['關公','（撫鬚）媽祖有令：每一局，讓小神仙動一次手，把一顆骰子翻到背面。只能一次，關某看著。'],
+  ],
+  dice_mid:[
+    ['千里眼','輸了輸了。那條金魚，是九十幾年前就在府城鬧事的金魚仙！'],
+    ['順風耳','他沒在天庭登記，怕被清點，想用怪風把驛船擋在海上，讓公文送不出去。'],
+    ['金魚仙','（從廟後的水溝探出頭）咕嚕咕嚕，說對了！不過公文封面我已經撕成九塊了，驛船也進不來，嘻嘻！'],
+    ['旁白','一陣怪風捲過廟埕，公文封面碎成九片。廟前舊水道上的天庭驛船，帆垂得軟趴趴的，一動也不動。'],
+    ['順風耳','（豎起耳朵）風神在接官亭那邊打呼……我替你們喊他過來。你們先把封面拼回去！'],
   ],
   dice_win:[
-    ['千里眼','輸了輸了。那條金魚，是九十幾年前就在府城鬧事的金魚仙！'],
-    ['順風耳','我聽見他說，要用一陣怪風把驛船擋在海上，讓公文送不出去。這樣玉帝清點的時候，就沒人會發現……'],
-    ['千里眼','……發現他根本沒在天庭登記！他是黑戶神仙！'],
-    ['土地公','難怪他怕被清點！快，去接官亭！'],
-  ],
-  port_in:[
-    ['旁白','舊港口的接官亭前，海風忽然停了。遠處的天庭驛船帆垂得軟趴趴的，一動也不動。'],
-    ['金魚仙','（從石坊後探出頭）咕嚕咕嚕，來不及了吧？沒有風，船進不來！'],
-    ['土地公','金魚仙！果然是你！'],
-    ['金魚仙','我還把公文封面撕成九塊了，嘻嘻，看你們怎麼交！'],
-    ['風神','（打了個大哈欠）誰在吵……我睡過頭了嗎？'],
-    ['土地公','風神！快颳風啊！'],
-  ],
-  port_win:[
-    ['旁白','驛船乘著風神的大風進港。天庭驛使接過公文，對著上面的印點點頭。'],
-    ['金魚仙','不、不要清點我！'],
+    ['旁白','驛船乘著風神的大風，沿著舊水道駛到廟前。天庭驛使上岸接過公文，對著上面的印點點頭。'],
+    ['金魚仙','（從水溝裡探出頭）不、不要清點我！'],
     ['旁白','天空「轟」的一聲，一道雷不偏不倚，劈在金魚仙的尾巴上。'],
     ['雷公','速報司的單子剛送到：擾亂公文，速報！'],
     ['金魚仙','（尾巴焦了一塊）嗚嗚……我只是想一直留在府城玩嘛……'],
@@ -872,11 +889,11 @@ const CLUES = {
   fill:'孔子看見雷陣雨的雲裡，有一條一擺一擺的魚尾巴。',
   vinegar:'速報司爺的報應簿：「怪風怪雨擾亂公文，速報。」',
   north:'龜將看見一隻金魚躲在打雷的雲裡偷笑。',
-  pawn:'有個穿金紅袍子、說話咕嚕咕嚕的客人，想冒領通天冠。',
+  pawn:'有個穿金紅袍子、說話咕嚕咕嚕的客人，想冒領通天冠，被趕走前還往印泥盒裡吐了魚缸水。',
   lingyou:'第二片金魚鱗：夾在吹走通天冠的怪風裡。',
   chikan:'金紅袍子的傢伙冒名告狀，害魁星被綁，還說要去萬福庵借東西。',
-  code:'第三片金魚鱗：大聖一棒嚇跑他時掉的。',
-  blade:'怪風被斬開時飄出魚腥味，咕嚕咕嚕地往媽祖廟逃了。',
+  code:'第三片金魚鱗：金魚仙被大聖的分身圍住，扭身逃走時掉的。',
+  blade:'怪風被斬開時飄出魚腥味，散掉的風全往西邊舊港口颳去。',
   dice:'真相：九十多年前就在府城鬧事的金魚仙，沒在天庭登記，怕被清點，想擋下公文。',
 };
 function playScene(key, lv, ph){
@@ -941,13 +958,12 @@ const TASKS = {
   fill:'看懂孔廟門口的下馬碑，把淋糊的碑文還原。',
   vinegar:'幫速報司爺把醋矸攪勻，請他記下這筆帳。',
   north:'幫大上帝想起自己鎮守的方位，和腳下的龜蛇二將。',
-  pawn:'填回當票上的門牌號碼，再端平古董印泥，讓「贖」字章吸飽墨，贖回通天冠。',
+  pawn:'填回當票上的門牌號碼，再拖著「贖」字章吸回四散的墨，避開魚缸水，贖回通天冠。',
   lingyou:'舉起手機轉身，用 AR 找回被怪風吹走的通天冠。',
   chikan:'解開捆仙索，再對照大士殿的神像，把魁星的姿勢喬回來。',
-  code:'用一路收集的數字，打開大聖的寶箱。',
+  code:'猜出萬福庵的舊名，再吹氣把大聖的毫毛變成分身，圍住來搶印的金魚仙。',
   blade:'揮手機當青龍偃月刀，斬斷在武廟前打轉的怪風。',
-  dice:'跟千里眼賭十八仔，三戰兩勝，問出幕後黑手的下落。',
-  port:'拼回公文封面、請風神颳風、叫驛船進港，最後交出公文。',
+  dice:'每局翻一顆骰子反敗為勝，賭贏十八仔拿到媽祖的印，再拼回被撕碎的公文封面、請風神颳風、把驛船叫到廟前，交出公文。',
 };
 
 // ================= 共用畫面 =================
@@ -960,8 +976,9 @@ function topbar(){
   for (let i = 1; i <= N; i++) h += `<i class="${S.done[i] ? 'on' : (i === S.lv ? 'now' : '')}"></i>`;
   $('#tProg').innerHTML = h;
 }
-const hk = () => S.ph === 'play2' ? S.lv + 'b' : S.ph === 'pose' ? S.lv + 'c' : String(S.lv);
-const hlist = () => S.ph === 'play2' ? L[S.lv].hints2 : S.ph === 'pose' ? L[S.lv].hints3 : L[S.lv].hints;
+const PH_B = ['play2', 'cover'], PH_C = ['pose', 'blow', 'ar', 'write'];
+const hk = () => PH_B.includes(S.ph) ? S.lv + 'b' : (PH_C.includes(S.ph) && L[S.lv].hints3) ? S.lv + 'c' : String(S.lv);
+const hlist = () => PH_B.includes(S.ph) ? L[S.lv].hints2 : (PH_C.includes(S.ph) && L[S.lv].hints3) ? L[S.lv].hints3 : L[S.lv].hints;
 function hintBlock(){
   const n = S.hints[hk()] || 0, hs = hlist();
   let h = '<div class="hints">';
@@ -994,7 +1011,7 @@ function render(){
   else if (S.lv > N) h = viewEnd();
   else {
     const l = L[S.lv];
-    h = ({go:viewGo, guide:viewGuide, play:viewPlay, play2:(l => l.scratch ? viewScratch(l) : viewTicket(l)), pose:viewPose, gate:viewGate, ar:viewArWait, blow:viewBlow, write:viewWrite, done:viewDone})[S.ph](l);
+    h = ({go:viewGo, guide:viewGuide, play:viewPlay, play2:(l => l.scratch ? viewScratch(l) : K() === 'code' ? viewHair(l) : viewTicket(l)), pose:viewPose, cover:viewCover, gate:viewGate, ar:viewArWait, blow:viewBlow, write:viewWrite, done:viewDone})[S.ph](l);
   }
   const keepScroll = T.keep; T.keep = false;
   app.innerHTML = h;
@@ -1002,6 +1019,7 @@ function render(){
   if (K() === 'vinegar' && S.ph === 'play') initJar();
   if (K() === 'bell' && S.ph === 'play') initMoz();
   if (K() === 'blade' && S.ph === 'play') initBlade();
+  if (K() === 'code' && S.ph === 'play2') initHair();
   if (K() === 'pawn' && S.ph === 'play2') initInk();
   if (S.ph === 'pose') Pose.mount();
   if (K() === 'walk' && S.ph === 'play') updSteps();
@@ -1015,8 +1033,8 @@ function viewIntro(){
     <div class="eyebrow">實 習 小 神 仙</div>
     <h1>小封神</h1>
   </div>
-  <div class="talisman"><span class="who">玉帝敕令</span><p>天庭今年要清點府城眾神，一份公文必須蓋齊九方神明的大印，日落前送到舊港口的接官亭，交給天庭驛船帶回去。這種跑腿小事，當然交給剛來報到的實習小神仙，也就是你們。玉帝說：「很簡單，蓋個印而已。」府城的神明們可不這麼想。</p></div>
-  <div class="plaque"><span class="tag">路線</span>台文館前集合 → 臨水夫人媽廟 → 孔廟 → 重慶寺（途中小站）→ 北極殿 → 同裕當鋪舊址（途中小站）→ 開基靈祐宮 → 赤崁樓・大士殿 → 萬福庵 → 祀典武廟 → 大天后宮 → 接官亭。每段步行都在 15 分鐘內，9 個印，14:00 到 17:20。</div>
+  <div class="talisman"><span class="who">玉帝敕令</span><p>天庭今年要清點府城眾神，一份公文必須蓋齊八方神明的大印，日落前交給天庭派來的驛船帶回去。這種跑腿小事，當然交給剛來報到的實習小神仙，也就是你們。玉帝說：「很簡單，蓋個印而已。」府城的神明們可不這麼想。</p></div>
+  <div class="plaque"><span class="tag">路線</span>台文館前集合 → 臨水夫人媽廟 → 孔廟 → 重慶寺（途中小站）→ 北極殿 → 同裕當鋪舊址（途中小站）→ 開基靈祐宮 → 赤崁樓・大士殿 → 萬福庵 → 祀典武廟 → 大天后宮（終點）。每段步行都在 15 分鐘內，8 個印，14:00 到 17:04。</div>
   <label for="team" class="muted">小神仙小隊名稱</label>
   <input type="text" id="team" maxlength="12" placeholder="例如：府城跑腿隊" value="${esc(S.team)}">
   <button class="btn wide" data-act="start">領公文出發</button>
@@ -1026,7 +1044,7 @@ function viewIntro(){
 function viewRules(){
   return `<div class="eyebrow">玩 法 說 明</div><h2>怎麼玩</h2>
   <div class="rules">
-    <section><h3>任務目標</h3><p>你們是送公文的實習小神仙。走訪府城各廟，幫神明解決麻煩，在公文上蓋齊 9 個印，最後到接官亭交給天庭驛船。</p></section>
+    <section><h3>任務目標</h3><p>你們是送公文的實習小神仙。走訪府城各廟，幫神明解決麻煩，在公文上蓋齊 8 個印，最後在大天后宮把公文交給天庭驛船。</p></section>
     <section><h3>每一站的流程</h3><ol>
       <li>在「關卡總覽」選一站，照著路線說明走過去。</li>
       <li>到了按「我們到了，解鎖這站」，回答一題只有在現場才看得到的題目，答對才會開啟這一站。</li>
@@ -1037,13 +1055,13 @@ function viewRules(){
     <section><h3>關卡玩法</h3><ul>
       <li>輸入答案：看現場的碑、門牌或神像，把答案打進去。</li>
       <li>對照刮除：用手指把「現場沒有的字」刮掉，刮到對的字會長回來。</li>
-      <li>體感：搖手機、揮手機、把手機端平、用手指畫圈。</li>
+      <li>體感：搖手機、揮手機、用手指畫圈或拖曳。</li>
       <li>AR：舉起手機轉身，找神明或法寶。</li>
-      <li>吹氣：對著手機麥克風吹氣喚風。</li>
+      <li>吹氣：對著手機麥克風吹氣，喚風或把大聖的毫毛吹成分身。</li>
     </ul></section>
-    <section><h3>提示與分數</h3><p>每關有 3 段提示，第 3 段就是答案。每關過關得 100 分，每看一次提示扣 ${CFG.hintCost} 分。卡關別硬撐，3 小時 20 分要走完全程。</p></section>
+    <section><h3>提示與分數</h3><p>每關有 3 段提示，第 3 段就是答案。每關過關得 100 分，每看一次提示扣 ${CFG.hintCost} 分。卡關別硬撐，3 小時要走完全程。</p></section>
     <section><h3>不要按手機的返回鍵</h3><p>手機的「返回」會離開遊戲網頁。要回上一步，請用畫面上的「‹ 返回」或「選單」。進度會自動保存，不小心離開了，重新打開同一個網址就能接著玩。</p></section>
-    <section><h3>自由選關</h3><p>可以照建議順序走，也可以任選關卡。建議順序是最順路、每段步行不超過 15 分鐘的走法。萬福庵的寶箱需要前面幾關拿到的數字，先玩其他關會比較好解。隨時可以結束任務看結局。</p></section>
+    <section><h3>自由選關</h3><p>可以照建議順序走，也可以任選關卡。建議順序是最順路、每段步行不超過 15 分鐘的走法。隨時可以結束任務看結局。</p></section>
     <section><h3>手機權限與隱私</h3><ul>
       <li>鏡頭：只在 AR 關開啟，不錄影、不上傳。</li>
       <li>麥克風：只在吹氣關開啟，只看音量，不錄音。</li>
@@ -1140,28 +1158,37 @@ function viewPlay(l){
     ${hintBlock()}`;
   }
   if (K() === 'code'){
-    T.code = T.code || '';
-    const slots = [0,1,2,3].map(i => `<span>${T.code[i] || ''}</span>`).join('');
-    const keys = ['1','2','3','4','5','6','7','8','9','清除','0','⌫'];
-    return `${head('密碼鎖')}
-    <div class="talisman"><span class="who">齊天大聖</span><p>「密碼是《小封神》開始連載的那一年。」</p></div>
-    <div><div class="muted" style="margin-bottom:6px">背包</div>${bagHTML()}</div>
-    <div class="slots">${slots}</div>
-    <div class="msg bad">${T.msg || ''}</div>
-    <div class="keys">${keys.map(k => `<button class="key" data-act="key" data-v="${k}">${k}</button>`).join('')}</div>${hintBlock()}`;
+    const r = l.riddle;
+    return `${head('上半：念快一點')}
+    <div class="talisman"><span class="who">齊天大聖</span><p>${esc(r.q)}</p></div>
+    <div class="opts two">${r.a.map((a, i) => `<button class="opt ${T.bad === i ? 'bad' : ''}" data-act="riddle" data-v="${i}" style="font-size:28px;font-family:var(--display)">${esc(a)}</button>`).join('')}</div>
+    <div class="msg bad">${T.bad != null ? '大聖搖頭：「再念一次，快一點、黏在一起念！」' : ''}</div>${hintBlock()}`;
   }
   if (K() === 'dice'){
-    T.w = T.w || 0; T.l = T.l || 0;
-    const dots = [0,1,2].map(i => `<i class="${i < T.w ? 'w' : ''}"></i>`).join('') + '<span style="width:12px"></span>' + [0,1,2].map(i => `<i class="${i < T.l ? 'l' : ''}"></i>`).join('');
-    return `${head('三戰兩勝')}
-    <div class="plaque"><span class="tag">十八仔規則</span>擲 4 顆骰子。有兩顆一樣，就看另外兩顆的點數和；4 顆全一樣最大；湊不出一對要重擲。</div>
-    <div class="duel"><div class="side"><span class="muted">你們</span><b>${T.pp ?? '—'}</b></div><div class="side"><span class="muted">千里眼</span><b>${T.op ?? '—'}</b></div></div>
-    <div class="dice">${(T.d || [1,2,3,4]).map(n => dieHTML(n)).join('')}</div>
-    <div class="score3" aria-label="勝 ${T.w}、負 ${T.l}">${dots}</div>
-    <div class="msg ${T.bad ? 'bad' : ''}">${T.msg || '搖手機擲骰！'}</div>
-    <button class="btn wide" data-act="roll" ${T.busy ? 'disabled' : ''}>擲骰</button>${hintBlock()}`;
+    if (T.me == null){ T.me = CFG.diceBank; T.them = CFG.diceBank; T.bet = Math.min(CFG.betMax, 20); }
+    const r = T.rd, canFlip = r && r.state === 'flip', over = T.me <= 0 || T.them <= 0;
+    const maxBet = Math.max(CFG.betMin, Math.min(CFG.betMax, T.me, T.them));
+    if (T.bet > maxBet) T.bet = maxBet;
+    const chips = []; for (let v = CFG.betMin; v <= CFG.betMax; v += CFG.betStep) chips.push(v);
+    const pdie = r ? r.pd.map((n, i) => `<button class="dieBtn ${r.fi === i ? 'flipped' : ''}" data-act="flip" data-v="${i}" ${canFlip ? '' : 'disabled'} aria-label="你們的第 ${i + 1} 顆骰子，${n} 點${canFlip ? '，點一下翻到背面' : ''}">${dieHTML(n)}</button>`).join('') : [1,2,3,4].map(n => dieHTML(n)).join('');
+    const bank = (name, v) => `<div class="bank"><span>${name}</span><b>${v}</b><i style="width:${Math.max(0, Math.min(100, v / (CFG.diceBank * 2) * 100))}%"></i></div>`;
+    return `${head('賭銅錢')}
+    <div class="plaque task"><span class="tag">規則</span>十八仔：有一對，就比另外兩顆的點數和；4 顆一樣最大；沒有一對算「無點」。<br><b>翻盤：</b>每局你們都先輸，只能點<b>一顆</b>骰子翻到背面（1↔6、2↔5、3↔4），贏過對手就贏走賭注，沒贏過就輸掉賭注。翻不了可以跳過，不輸錢。<br><b>誰先把銅錢輸光誰就輸。</b></div>
+    <div class="banks">${bank('你們的銅錢', T.me)}${bank('千里眼＋順風耳', T.them)}</div>
+    ${r ? `<div class="duelRow"><span class="muted">${r.opp}的骰子</span><b>${r.ot}</b></div><div class="dice">${r.od.map(n => dieHTML(n)).join('')}</div>` : ''}
+    <div class="duelRow"><span class="muted">你們的骰子${canFlip ? `（押 ${r.bet}，點一顆翻面）` : ''}</span><b>${r ? r.pt : '—'}</b></div>
+    <div class="dice">${pdie}</div>
+    <div class="msg ${T.bad ? 'bad' : ''}">${T.msg || '先選這局要押多少銅錢，再按「擲骰」。'}</div>
+    ${canFlip ? '<button class="btn ghost wide" data-act="dice-skip">這局翻不了，跳過（不輸錢）</button>'
+      : over ? (T.me <= 0 ? '<button class="btn wide" data-act="dice-reset">銅錢輸光了，重新挑戰</button>' : '')
+      : `<div class="betRow"><span class="muted">這局押</span>${chips.map(v => `<button class="chip ${T.bet === v ? 'on' : ''}" data-act="bet" data-v="${v}" ${v > maxBet ? 'disabled' : ''}>${v}</button>`).join('')}</div>
+    <button class="btn wide" data-act="roll" ${T.busy ? 'disabled' : ''}>押 ${T.bet} 銅錢，擲骰</button>`}${hintBlock()}`;
   }
-  if (K() === 'port'){
+  return '';
+}
+
+function viewCover(l){
+  {
     if (!T.tiles){
       const n = [...l.puzzle].length;
       let t; do { t = Array.from({length:n}, (_, i) => i).sort(() => Math.random() - .5); } while (t.every((v, i) => v === i));
@@ -1169,11 +1196,10 @@ function viewPlay(l){
     }
     const chars = [...l.puzzle];
     return `${head('拼回封面')}
-    <div class="talisman"><span class="who">公文封面</span><p>點兩塊碎片交換位置，把公文封面拼回來。</p></div>
-    <div class="puzzle">${T.tiles.map((ci, pos) => `<button class="tile ${T.pick === pos ? 'sel' : ''} ${ci === pos ? 'ok' : ''}" data-act="tile" data-v="${pos}" aria-label="第 ${pos+1} 格：${chars[ci]}">${chars[ci]}</button>`).join('')}</div>
+    <div class="talisman"><span class="who">公文封面</span><p>點兩塊碎片交換位置，把公文封面拼回來。<b>閱讀順序：照格子左上角的小數字 1→9，由左到右、由上到下讀</b>（第一排讀完再讀第二排、第三排），會是一句完整的話。</p></div>
+    <div class="puzzle">${T.tiles.map((ci, pos) => `<button class="tile ${T.pick === pos ? 'sel' : ''} ${ci === pos ? 'ok' : ''}" data-act="tile" data-v="${pos}" aria-label="第 ${pos+1} 格：${chars[ci]}"><small class="tileN">${pos + 1}</small>${chars[ci]}</button>`).join('')}</div>
     <div class="muted" style="text-align:center">淡綠色代表放對位置</div>${hintBlock()}`;
   }
-  return '';
 }
 
 function viewGate(l){
@@ -1203,9 +1229,19 @@ function viewArWait(l){
   <button class="btn wide" data-act="ar-reopen">打開 AR 畫面</button>${hintBlock()}`;
 }
 
+function ticketHTML(known){
+  return `<div class="ticket" id="ticket">
+    <div class="t-h">同裕當鋪　當票</div>
+    <div class="t-row"><span>當物</span><b>通天冠一頂</b></div>
+    <div class="t-row"><span>當主</span><b>康元帥、趙元帥</b></div>
+    <div class="t-row"><span>地址</span><b>${known ? '打銀街（今忠義路二段 167 號）' : '打銀街（今忠義路二段 <span class="smudge">▒▒▒</span> 號）'}</b></div>
+    <div class="t-row"><span>期限</span><b>逾期不贖，冠歸本號</b></div>
+    <div class="t-stamp" id="tStamp" ${T.stamped ? '' : 'hidden'}>贖</div>
+  </div>`;
+}
 function viewAsk(l){
   return `${head('上半：輸入答案')}
-  <div class="talisman"><span class="who">${esc(l.who)}</span><p>${esc(l.ask.q)}</p></div>
+  ${K() === 'pawn' ? `<div class="talisman"><span class="who">${esc(l.who)}</span><p>當票上的地址被雨淋糊了。抬頭看看這棟樓的門牌，把號碼填回去，才能贖回通天冠。</p></div>${ticketHTML(false)}<label for="ans" class="muted">${esc(l.ask.q)}</label>` : `<div class="talisman"><span class="who">${esc(l.who)}</span><p>${esc(l.ask.q)}</p></div>`}
   <div class="row" style="flex-wrap:nowrap"><input type="text" id="ans" maxlength="6" autocomplete="off" placeholder="輸入答案" value="${esc(T.ans || '')}" style="flex:1;min-width:0"><button class="btn" data-act="ask">確定</button></div>
   <div class="msg bad">${T.msg || ''}</div>${hintBlock()}`;
 }
@@ -1243,21 +1279,22 @@ function viewPose(l){
 }
 
 function viewTicket(l){
-  return `${head('端平印泥')}
-  <div class="talisman"><span class="who">朝奉</span><p>手機平放在掌心，像端著一碟墨。微微調整手機的傾斜，讓墨珠停在「贖」字章上，章就會慢慢吸飽墨。斜太多，墨會灑出來。</p></div>
-  <div class="mozWrap"><canvas id="inkCv" aria-label="印泥盒：傾斜手機讓墨珠停在印章上" style="touch-action:none"></canvas></div>
+  return `${head('下半：拖章吸墨')}
+  ${ticketHTML(true)}
+  <div class="talisman"><span class="who">朝奉</span><p>按住「贖」字章拖來拖去，碰到紅色墨滴就會吸進去，吸滿 ${CFG.inkNeed} 滴就能蓋。藍綠色、冒泡泡的是魚缸水，會慢慢追著章跑，沾到墨會被沖掉一半。拖太快會把墨滴撞出盒外。</p></div>
+  <div class="mozWrap"><canvas id="inkCv" aria-label="印泥盒：拖著印章吸紅色墨滴，避開魚缸水" style="touch-action:none"></canvas></div>
   <div class="bar"><i id="inkBar" style="width:${T.stamped ? 100 : 0}%"></i></div>
-  <div class="msg" id="inkMsg">${T.stamped ? '贖回了！' : '端平手機，等墨珠停下來……'}</div>
-  <div class="row" style="justify-content:center"><button class="btn ghost" data-act="ink-cal">重新校正水平</button></div>
-  <p class="muted" style="text-align:center">手機沒反應時，可以用手指把墨珠拖到印章上。</p>
-  <div class="ticket" id="ticket">
-    <div class="t-h">同裕當鋪　當票</div>
-    <div class="t-row"><span>當物</span><b>通天冠一頂</b></div>
-    <div class="t-row"><span>當主</span><b>康元帥、趙元帥</b></div>
-    <div class="t-row"><span>地址</span><b>打銀街（今忠義路二段 167 號）</b></div>
-    <div class="t-row"><span>期限</span><b>逾期不贖，冠歸本號</b></div>
-    <div class="t-stamp" id="tStamp" ${T.stamped ? '' : 'hidden'}>贖</div>
-  </div>${hintBlock()}`;
+  <div class="msg" id="inkMsg">${T.stamped ? '贖回了！' : '按住「贖」字章，拖去吸紅色的墨滴。'}</div>
+  <div class="row" style="justify-content:center"><button class="btn" data-act="ink-refill" id="inkRefill" hidden>補充墨水</button></div>${hintBlock()}`;
+}
+
+function viewHair(l){
+  return `${head('下半：拔毛變分身')}
+  <div class="talisman"><span class="who">齊天大聖</span><p>答對了！這裡原本是鄭成功部將阮駿夫人的住所，大家叫它「阮夫人寺」。……咦，那條金魚又來搶印了！俺拔一撮毫毛，你們對著手機下方的麥克風用力吹，吹出 ${CFG.hairNeed} 個分身把他圍住！</p></div>
+  <div class="mozWrap"><canvas id="hairCv" aria-label="金魚仙游向大聖的印，吹氣變出分身把他圍住"></canvas></div>
+  <div class="bar"><i id="hairBar" style="width:0%"></i></div>
+  <div class="msg" id="hairMsg">${T.micNo ? '麥克風沒有開啟，請按住下面的按鈕代替吹氣。' : (T.micOk ? '對著麥克風用力吹！' : '正在開啟麥克風……')}</div>
+  <button class="btn ghost wide" id="hairHold" style="touch-action:none;user-select:none;-webkit-user-select:none">按住代替吹氣</button>${hintBlock()}`;
 }
 
 function viewBlow(){
@@ -1271,7 +1308,7 @@ function viewBlow(){
 
 function viewWrite(){
   return `${head('填寫回條')}
-  <div class="talisman"><span class="who">天庭驛使</span><p>「九個印都齊了，辛苦啦！回條上要寫一句這趟的回報，玉帝最愛看小神仙出包的故事。」</p></div>
+  <div class="talisman"><span class="who">天庭驛使</span><p>「船總算到了！回條上要寫一句這趟的回報，玉帝最愛看小神仙出包的故事。」</p></div>
   <label for="line" class="muted">你們的回報（一句就好）</label>
   <textarea id="line" maxlength="80" rows="3" placeholder="例如：報告玉帝，小上帝的通天冠今天又飛走了一次。">${esc(S.line)}</textarea>
   <div class="msg bad">${T.msg || ''}</div>
@@ -1280,7 +1317,7 @@ function viewWrite(){
 
 function viewDone(l){
   const isDigit = DIGIT_LV.includes(S.lv) && !!S.digits[S.lv];
-  const nx = K() === 'port' ? 0 : nextSuggest(S.lv), last = !nx;
+  const nx = K() === 'dice' ? 0 : nextSuggest(S.lv), last = !nx;
   const label = l.mini ? `得到「${l.reward.item}」` : `蓋到「${l.stamp}」字印`;
   const sub = isDigit ? `印章邊上刻著數字「${S.digits[S.lv]}」，萬福庵的寶箱會用到。` : (l.mini ? '途中小站不蓋公文印，但這樣東西後面用得到。' : (l.reward.item ? `得到「${l.reward.item}」。` : ''));
   let next = '';
@@ -1312,7 +1349,7 @@ function viewEnd(){
     <div><b>${used}</b><span>用了幾次提示</span></div>
     <div><b>${doneN} / ${N}</b><span>完成的關卡與小站</span></div>
   </div>
-  <p class="muted">神農街就在旁邊，去走走吧。請把這個畫面給工作人員看。</p>
+  <p class="muted">大天后宮旁就是赤崁樓和永福路老街區，散場後可以慢慢逛。請把這個畫面給工作人員看。</p>
   <button class="btn ghost" data-act="menu">選單</button>`;
 }
 
@@ -1742,31 +1779,47 @@ function pts(d){
   pairs.forEach(pv => { const r = d.slice(); r.splice(r.indexOf(pv), 1); r.splice(r.indexOf(pv), 1); best = Math.max(best, r[0] + r[1]); });
   return {p:best, t:best === 12 ? '十八仔！12 點' : `${best} 點`};
 }
+const flipFace = n => 7 - n;
+const ptsLabel = r => r.p >= 100 ? r.t : r.p === 0 ? '無點' : r.t;
+function flipWins(pd, op){ return pd.some((n, i) => { const d = pd.slice(); d[i] = flipFace(n); return pts(d).p > op; }); }
 function roll(){
   if (T.busy || K() !== 'dice' || S.ph !== 'play') return;
-  if (T.w >= 2) return;
-  if (T.l >= 2){ T.w = 0; T.l = 0; }
-  T.busy = true;
-  const d = rollFour(), r = pts(d);
-  T.d = d; T.msg = ''; T.keep = true;
+  if (T.rd && T.rd.state === 'flip') return;
+  if (T.me == null){ T.me = CFG.diceBank; T.them = CFG.diceBank; T.bet = 20; }
+  if (T.me <= 0 || T.them <= 0) return;
+  T.bet = Math.max(1, Math.min(T.bet, T.me, T.them));
+  T.busy = true; T.n = (T.n || 0) + 1;
+  // 每一局玩家都先輸；大多數局能靠翻一顆翻盤，少數局翻不了，要按跳過
+  const wantSolvable = Math.random() < .8;
+  let pd, od, pr, orr, tries = 0;
+  do {
+    pd = rollFour(); od = rollFour(); pr = pts(pd); orr = pts(od); tries++;
+  } while (tries < 500 && (orr.p === 0 || pr.p >= orr.p || flipWins(pd, orr.p) !== wantSolvable));
+  T.rd = {pd, od, opp:T.n % 2 ? '千里眼' : '順風耳', pt:ptsLabel(pr), ot:ptsLabel(orr), op:orr.p, state:'flip', fi:null, bet:T.bet};
+  T.msg = `押 ${T.bet} 銅錢。${T.rd.opp} ${T.rd.ot}，你們 ${T.rd.pt}，目前落後。挑一顆骰子翻面！`; T.bad = false; T.keep = true;
   if (navigator.vibrate) navigator.vibrate(40);
   render(); spinDice();
-  if (r.p === 0){
-    T.pp = '無點'; T.op = '—'; T.msg = '湊不出一對，再擲一次。'; T.bad = false; T.busy = false;
-    return setTimeout(() => { T.keep = true; render(); }, 550);
-  }
-  T.pp = r.p >= 100 ? '一色' : r.p;
-  setTimeout(() => {
-    let od, orr; do { od = rollFour(); orr = pts(od); } while (orr.p === 0);
-    T.d = od; T.op = orr.p >= 100 ? '一色' : orr.p;
-    if (r.p > orr.p){ T.w++; T.msg = `你們 ${r.t}，千里眼 ${orr.t}，這局你們贏！`; T.bad = false; }
-    else if (r.p < orr.p){ T.l++; T.msg = `千里眼 ${orr.t}，贏了這局。`; T.bad = true; }
-    else { T.msg = '平手，重來。'; T.bad = false; }
-    if (T.l >= 2) T.msg = '千里眼贏了三戰兩勝。再擲一次重新挑戰！';
-    T.busy = false; T.keep = true;
-    render(); spinDice();
-    if (T.w >= 2) setTimeout(pass, 1300);
-  }, 1100);
+  T.busy = false;
+}
+function flipDie(i){
+  const r = T.rd; if (!r || r.state !== 'flip') return;
+  i = +i; const before = r.pd[i];
+  r.pd[i] = flipFace(before); r.fi = i; r.state = 'done';
+  const np = pts(r.pd); r.pt = ptsLabel(np);
+  if (np.p > r.op){ T.me += r.bet; T.them -= r.bet; T.bad = false; T.msg = `${before} 翻成 ${r.pd[i]}，變成 ${r.pt}，贏過${r.opp}！贏走 ${r.bet} 銅錢！`; if (navigator.vibrate) navigator.vibrate([40, 30, 80]); }
+  else { T.me -= r.bet; T.them += r.bet; T.bad = true; T.msg = `${before} 翻成 ${r.pd[i]}，${r.pt}，還是沒贏過${r.opp}的 ${r.ot}。輸掉 ${r.bet} 銅錢。`; if (navigator.vibrate) navigator.vibrate(120); }
+  if (T.me <= 0){ T.me = 0; T.msg += ' 你們的銅錢輸光了！'; }
+  if (T.them <= 0){ T.them = 0; T.msg += ' 兩位將軍的銅錢被你們贏光了！'; }
+  T.keep = true; render();
+  const el = document.querySelectorAll('.dieBtn .die')[i]; if (el) el.classList.add('spin');
+  if (T.them <= 0) setTimeout(() => { if (K() === 'dice' && S.ph === 'play') playScene('dice_mid', S.lv, 'cover'); }, 1600);
+}
+function diceSkip(){
+  const r = T.rd; if (!r || r.state !== 'flip') return;
+  const could = flipWins(r.pd, r.op);
+  r.state = 'skip';
+  T.bad = false; T.msg = could ? '跳過了，銅錢沒少。其實這局翻得了喔！' : '跳過了，銅錢沒少。這局確實怎麼翻都贏不了。';
+  T.keep = true; render();
 }
 function spinDice(){ document.querySelectorAll('.die').forEach(e => e.classList.add('spin')); }
 // 第 9 關
@@ -1781,7 +1834,7 @@ function tile(pos){
 let blowAcc = 0, holdDown = false, lastTick = 0;
 function tickBlow(t){
   const dt = lastTick ? Math.min(.1, (t - lastTick) / 1000) : 0; lastTick = t;
-  if (K() !== 'port' || S.ph !== 'blow') return;
+  if (K() !== 'dice' || S.ph !== 'blow') return;
   const lvl = micLevel();
   if (holdDown || lvl > 0.12) blowAcc += dt;
   const p = Math.min(1, blowAcc / CFG.blowSeconds);
@@ -1791,7 +1844,11 @@ function tickBlow(t){
   if (p >= 1 && !T.blown){
     T.blown = true; stopMic(); blowAcc = 0; holdDown = false;
     if (navigator.vibrate) navigator.vibrate([60, 40, 160]);
-    setTimeout(() => { goto(S.lv, 'ar'); startAR(S.lv); }, 400);
+    setTimeout(() => {
+      const go = () => { goto(S.lv, 'ar'); startAR(S.lv); };
+      // 擲骰不用感測器，所以到 AR 找驛船前才詢問動作感測器（轉身和揮手機要用）
+      if (!sensorsAsked) needPerm('motion', () => { askSensors(); go(); }, go); else go();
+    }, 400);
   }
 }
 document.addEventListener('pointerdown', e => { if (e.target.id === 'blowHold'){ holdDown = true; e.preventDefault(); } });
@@ -1910,7 +1967,7 @@ function startAR(lv){
   const k = L[lv].k;
   if (k === 'lingyou') openAR({who:'小上帝', draw:drawCrown, swings:0, find:'通天冠被風吹出來了！轉身找到它，點一下。'});
   else if (k === 'chikan') openAR({who:'魁星爺', draw:drawKuixing, swings:CFG.swingKuixing, find:'魁星爺現身了！轉身找到被綁住的他，點一下。', swingText:'用力揮手機，甩開捆仙索！', after:() => goto(lv, 'pose')});
-  else if (k === 'port') openAR({who:'天庭驛使', draw:drawShip, swings:CFG.swingWorm, find:'驛船乘風進港了！轉身找到它，點一下。', swingText:'揮手機當令旗，讓驛船看到你們！', after:() => goto(lv, 'write')});
+  else if (k === 'dice') openAR({who:'天庭驛使', draw:drawShip, swings:CFG.swingWorm, find:'驛船乘著風神的風，沿舊水道駛到廟前了！轉身找到它，點一下。', swingText:'揮手機當令旗，讓驛船看到你們！', after:() => goto(lv, 'write')});
 }
 
 function tickScan(){
@@ -2109,88 +2166,270 @@ const Pose = (() => {
   return {mount, autoOne};
 })();
 
-function tick(t){ tickNorth(); tickBlow(t); tickScan(); tickHold(); tickMoz(t); tickBlade(t); tickInk(t); }
+function tick(t){ tickNorth(); tickBlow(t); tickScan(); tickHold(); tickMoz(t); tickBlade(t); tickInk(t); tickHair(t); }
 
-// ================= 當鋪：端平印泥 =================
-// 手機平放時 beta≈0、gamma≈0。開始時先記下玩家手上的角度當作「水平」，之後看相對傾斜。
-function initInk(){
-  const cv = $('#inkCv'); if (!cv) return;
-  const W = cv.parentNode.clientWidth, H = Math.round(W * .82), d = Math.min(devicePixelRatio || 1, 2);
+// ================= 萬福庵：拔毛變分身 =================
+let hairHold = false;
+document.addEventListener('pointerdown', e => { if (e.target.id === 'hairHold'){ hairHold = true; e.preventDefault(); } });
+['pointerup','pointercancel'].forEach(n => document.addEventListener(n, () => { hairHold = false; }));
+function riddle(v){
+  const r = L[S.lv].riddle;
+  if (+v !== r.ok){ T.bad = +v; T.keep = true; if (navigator.vibrate) navigator.vibrate(120); return render(); }
+  if (navigator.vibrate) navigator.vibrate([40, 30, 80]);
+  goto(S.lv, 'play2');
+  needPerm('mic', startMic, () => { T.micNo = true; T.keep = true; render(); });
+}
+function initHair(){
+  const cv = $('#hairCv'); if (!cv) return;
+  const W = cv.parentNode.clientWidth, H = Math.round(W * .8), d = Math.min(devicePixelRatio || 1, 2);
   cv.width = W * d; cv.height = H * d; cv.style.width = W + 'px'; cv.style.height = H + 'px';
   cv.getContext('2d').setTransform(d, 0, 0, d, 0, 0);
-  if (!T.ink) T.ink = {x:.75, y:-.55, vx:0, vy:0, fill:0, b0:null, g0:null, calAt:performance.now() + 500, last:0, drag:null, spill:0, wob:Math.random() * 6};
-  T.ink.W = W; T.ink.H = H;
-  const pos = e => { const r = cv.getBoundingClientRect(), R = Math.min(W, H) * .42; return {x:(e.clientX - r.left - W / 2) / R, y:(e.clientY - r.top - H / 2) / R}; };
-  cv.onpointerdown = e => { if (T.stamped) return; cv.setPointerCapture(e.pointerId); T.ink.drag = pos(e); };
-  cv.onpointermove = e => { if (T.ink.drag) T.ink.drag = pos(e); };
-  cv.onpointerup = cv.onpointercancel = () => { T.ink.drag = null; };
+  if (!T.hair) T.hair = {n:0, acc:0, fx:1, fly:[], poof:[], last:0, steal:0, done:0};
+  T.hair.W = W; T.hair.H = H;
 }
-function inkCal(){ const k = T.ink; if (!k) return; k.b0 = null; k.g0 = null; k.calAt = performance.now() + 300; const m = $('#inkMsg'); if (m) m.textContent = '校正中，手機拿著別動……'; }
+function tickHair(t){
+  const h = T.hair, cv = $('#hairCv');
+  if (!h || !cv || K() !== 'code' || S.ph !== 'play2') return;
+  const dt = Math.min(.05, h.last ? (t - h.last) / 1000 : 0); h.last = t;
+  const W = h.W, H = h.H, need = CFG.hairNeed;
+  const seal = {x:W * .17, y:H * .5}, far = W * .86;
+  const fishX = () => seal.x + 40 + h.fx * (far - seal.x - 40), fishY = H * .5 + Math.sin(t / 380) * 10;
+  let msg = null;
+  const blowing = hairHold || micLevel() > .12;
+  if (!h.done && dt > 0){
+    if (blowing){
+      h.acc += dt;
+      while (h.acc >= CFG.hairChunk){ h.acc -= CFG.hairChunk; h.fly.push({t0:t, sx:W * .5 + (Math.random() - .5) * 40, sy:H + 10, slot:h.n + h.fly.length}); }
+    }
+    // 毫毛飛到金魚仙身邊變成分身
+    h.fly = h.fly.filter(f => {
+      if (t - f.t0 < 550) return true;
+      if (h.n < need){ h.n++; h.fx = Math.min(1, h.fx + .1); h.poof.push({t0:t, kind:'pop', slot:h.n - 1}); if (navigator.vibrate) navigator.vibrate(15); }
+      return false;
+    });
+    // 金魚仙往印游過去，分身越多游越慢
+    h.fx -= dt / CFG.hairFish * (1 - .7 * h.n / need);
+    if (h.fx <= 0){
+      h.fx = 1; h.steal = t;
+      const lose = Math.ceil(h.n / 2); h.n -= lose;
+      for (let i = 0; i < lose; i++) h.poof.push({t0:t, kind:'gone', slot:h.n + i});
+      if (navigator.vibrate) navigator.vibrate([60, 40, 60]);
+    }
+    if (h.n >= need){
+      h.done = t; stopMic();
+      if (navigator.vibrate) navigator.vibrate([60, 40, 160]);
+      setTimeout(() => { if (K() === 'code' && S.ph === 'play2') pass(); }, 1500);
+    }
+    if (h.done) msg = '圍住了！';
+    else if (t - h.steal < 2000) msg = '金魚仙摸到印了！分身被嚇跑一半，快再吹！';
+    else if (blowing) msg = `吹得好！分身 ${h.n} / ${need}`;
+    else msg = T.micNo ? '按住下面的按鈕代替吹氣。' : `對著麥克風用力吹！分身 ${h.n} / ${need}`;
+    const bar = $('#hairBar'); if (bar) bar.style.width = (h.n / need * 100) + '%';
+    const m = $('#hairMsg'); if (m && m.textContent !== msg){ m.textContent = msg; m.classList.toggle('bad', msg.startsWith('金魚仙摸到')); }
+  }
+  // 畫面
+  const c = cv.getContext('2d'), fx = fishX(), fy = fishY;
+  c.clearRect(0, 0, W, H);
+  c.fillStyle = 'rgba(232,184,74,.08)'; c.fillRect(0, H * .78, W, H * .22);
+  // 大聖的印
+  const S2 = Math.min(W, H) * .2;
+  c.save(); c.translate(seal.x, seal.y); c.rotate(-.05);
+  c.fillStyle = '#b8231d'; c.fillRect(-S2 / 2, -S2 / 2, S2, S2);
+  c.fillStyle = '#efe3c8'; c.font = `900 ${Math.round(S2 * .62)}px "Noto Serif TC", serif`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('聖', 0, S2 * .03);
+  c.restore();
+  if (t - h.steal < 600){ c.fillStyle = `rgba(208,72,42,${.35 * (1 - (t - h.steal) / 600)})`; c.fillRect(0, 0, W, H); }
+  // 金魚仙
+  const fr = Math.min(W, H) * .07, flick = Math.sin(t / 120) * .35;
+  c.save(); c.translate(fx, fy); if (h.done) c.globalAlpha = Math.max(0, 1 - (t - h.done) / 1200);
+  c.fillStyle = '#e0602f';
+  c.beginPath(); c.moveTo(fr * .9, 0); c.lineTo(fr * 1.7, -fr * (.7 + flick)); c.lineTo(fr * 1.7, fr * (.7 - flick)); c.closePath(); c.fill();
+  c.beginPath(); c.ellipse(0, 0, fr * 1.1, fr * .75, 0, 0, 6.283); c.fill();
+  c.fillStyle = '#f2b53a'; c.beginPath(); c.ellipse(-fr * .1, fr * .25, fr * .6, fr * .25, 0, 0, 6.283); c.fill();
+  c.fillStyle = '#fff'; c.beginPath(); c.arc(-fr * .55, -fr * .2, fr * .22, 0, 6.283); c.fill();
+  c.fillStyle = '#222'; c.beginPath(); c.arc(-fr * .6, -fr * .2, fr * .11, 0, 6.283); c.fill();
+  c.restore();
+  // 分身圍成一圈
+  const ring = Math.min(W, H) * (.2 - .06 * h.n / need) + (h.done ? -Math.min(1, (t - h.done) / 800) * 10 : 0);
+  const slotPos = i => { const a = i / need * 6.283 + t / 2200; return {x:fx + Math.cos(a) * ring, y:fy + Math.sin(a) * ring * .8}; };
+  const monkey = (x, y, r, a) => {
+    c.globalAlpha = a;
+    c.fillStyle = '#7a4a24'; c.beginPath(); c.arc(x - r * .9, y - r * .1, r * .38, 0, 6.283); c.arc(x + r * .9, y - r * .1, r * .38, 0, 6.283); c.fill();
+    c.beginPath(); c.arc(x, y, r, 0, 6.283); c.fill();
+    c.fillStyle = '#f0c99a'; c.beginPath(); c.ellipse(x, y + r * .18, r * .7, r * .6, 0, 0, 6.283); c.fill();
+    c.fillStyle = '#e8b84a'; c.fillRect(x - r * .9, y - r * .62, r * 1.8, r * .22);
+    c.fillStyle = '#222'; c.beginPath(); c.arc(x - r * .28, y + r * .02, r * .1, 0, 6.283); c.arc(x + r * .28, y + r * .02, r * .1, 0, 6.283); c.fill();
+    c.globalAlpha = 1;
+  };
+  const mr = Math.min(W, H) * .045;
+  for (let i = 0; i < h.n; i++){ const p = slotPos(i); monkey(p.x, p.y, mr, 1); }
+  h.poof = h.poof.filter(pf => t - pf.t0 < 500);
+  for (const pf of h.poof){
+    const p = slotPos(pf.slot), k = (t - pf.t0) / 500;
+    c.strokeStyle = pf.kind === 'pop' ? `rgba(232,184,74,${1 - k})` : `rgba(200,200,200,${1 - k})`; c.lineWidth = 2;
+    c.beginPath(); c.arc(p.x, p.y, mr * (1 + k * 1.4), 0, 6.283); c.stroke();
+    if (pf.kind === 'gone') monkey(p.x, p.y - k * 20, mr, 1 - k);
+  }
+  // 飛行中的毫毛
+  for (const f of h.fly){
+    const k = Math.min(1, (t - f.t0) / 550), p = slotPos(f.slot % need);
+    const x = f.sx + (p.x - f.sx) * k, y = f.sy + (p.y - f.sy) * k - Math.sin(k * 3.14) * 40;
+    c.strokeStyle = '#e8b84a'; c.lineWidth = 2; c.beginPath(); c.moveTo(x - 6, y + 4); c.quadraticCurveTo(x, y - 6, x + 6, y + 2); c.stroke();
+  }
+}
+
+// ================= 當鋪：拖章吸墨 =================
+// 手指拖著「贖」字章在印泥盒裡吸紅墨滴；碰到金魚仙吐的魚缸水，章上的墨被沖掉一半；
+// 拖太快會把墨滴撞開，撞出盒外的墨滴就沒了。墨不夠時出現「補充墨水」。
+function inkSpawn(k, n, kind){
+  for (let i = 0; i < n; i++){
+    // 魚缸水從離章最遠的那一側冒出來
+    const a = kind === 'water' ? Math.atan2(-k.sy, -k.sx) + (Math.random() - .5) * 1.6 : Math.random() * 6.283;
+    let r = kind === 'water' ? .7 + Math.random() * .15 : .25 + Math.random() * .6;
+    if (kind === 'ink' && Math.hypot(Math.cos(a) * r - k.sx, Math.sin(a) * r - k.sy) < .45){ i--; continue; }   // 不要直接生在章底下
+    k.drops.push({x:Math.cos(a) * r, y:Math.sin(a) * r, vx:(Math.random() - .5) * .08, vy:(Math.random() - .5) * .08, kind, ph:Math.random() * 6, out:0, born:performance.now()});
+  }
+}
+function initInk(){
+  const cv = $('#inkCv'); if (!cv) return;
+  const W = cv.parentNode.clientWidth, H = Math.round(W * .86), d = Math.min(devicePixelRatio || 1, 2);
+  cv.width = W * d; cv.height = H * d; cv.style.width = W + 'px'; cv.style.height = H + 'px';
+  cv.getContext('2d').setTransform(d, 0, 0, d, 0, 0);
+  if (!T.ink){
+    T.ink = {sx:0, sy:.62, px:0, py:.62, respawn:[], spd:0, fill:0, drops:[], drag:null, last:0, hitAt:0, washAt:0, lost:0};
+    inkSpawn(T.ink, CFG.inkDrops, 'ink'); inkSpawn(T.ink, CFG.inkWater, 'water');
+  }
+  const k = T.ink; k.W = W; k.H = H;
+  if (/[?&]test\b/.test(location.search)) window.__ink = () => T.ink;   // 自動測試用
+  if (!k.scrolled){ k.scrolled = true; setTimeout(() => { if ($('#inkCv') === cv) cv.scrollIntoView({behavior:'smooth', block:'center'}); }, 700); }
+  const pos = e => { const r = cv.getBoundingClientRect(), R = Math.min(W, H) * .46; return {x:(e.clientX - r.left - W / 2) / R, y:(e.clientY - r.top - H / 2) / R}; };
+  cv.onpointerdown = e => { if (T.stamped) return; cv.setPointerCapture(e.pointerId); k.drag = pos(e); e.preventDefault(); };
+  cv.onpointermove = e => { if (k.drag) k.drag = pos(e); };
+  cv.onpointerup = cv.onpointercancel = () => { k.drag = null; };
+}
+function inkRefill(){
+  const k = T.ink; if (!k || T.stamped) return;
+  inkSpawn(k, CFG.inkRefill, 'ink');
+  $('#inkRefill').hidden = true;
+  const m = $('#inkMsg'); if (m){ m.classList.remove('bad'); m.textContent = '補了一批墨，慢慢吸，別推太快。'; }
+  if (navigator.vibrate) navigator.vibrate(40);
+}
 function tickInk(t){
   const k = T.ink, cv = $('#inkCv');
   if (!k || !cv || K() !== 'pawn' || S.ph !== 'play2') return;
   const dt = Math.min(.05, k.last ? (t - k.last) / 1000 : 0); k.last = t;
-  const W = k.W, H = k.H, cx = W / 2, cy = H / 2, R = Math.min(W, H) * .42, seal = .3;
-  let tb = 0, tg = 0, msg = null;
-  const sensor = tiltB != null && tiltG != null;
-  if (sensor && k.b0 == null && t >= k.calAt){ k.b0 = tiltB; k.g0 = tiltG; }
-  if (!T.stamped){
+  const W = k.W, H = k.H, cx = W / 2, cy = H / 2, R = Math.min(W, H) * .46;
+  const SR = .26, DR = .085, need = CFG.inkNeed;   // 章的半徑、墨滴半徑（以印泥盒半徑為 1）
+  let msg = null;
+  if (!T.stamped && dt > 0){
+    // 章跟著手指
     if (k.drag){
-      k.vx = (k.drag.x - k.x) * 6; k.vy = (k.drag.y - k.y) * 6;
-    } else if (sensor && k.b0 != null){
-      tb = tiltB - k.b0; tg = tiltG - k.g0;
-      // 傾斜讓墨珠往低處滑，再加一點點飄移，玩家得一直微調
-      const drift = .12 * Math.sin(t / 900 + k.wob), drift2 = .12 * Math.cos(t / 1300 + k.wob);
-      k.vx += (tg / 12 + drift) * dt * 3.2; k.vy += (tb / 12 + drift2) * dt * 3.2;
-      k.vx *= Math.pow(.25, dt); k.vy *= Math.pow(.25, dt);
-    } else if (!sensor){ msg = '偵測不到手機的水平，請用手指把墨珠拖到印章上。'; }
-    k.x += k.vx * dt; k.y += k.vy * dt;
-    const r = Math.hypot(k.x, k.y);
-    if (r > .9){ k.x *= .9 / r; k.y *= .9 / r; k.vx *= -.3; k.vy *= -.3; }
-    const tilt = Math.hypot(tb, tg), on = Math.hypot(k.x, k.y) < seal;
-    if (tilt > CFG.inkSpill){ k.fill = Math.max(0, k.fill - dt * .12); k.spill = t; msg = '斜太多了，墨灑出來了！慢慢放平。'; }
-    else if (on){ k.fill = Math.min(1, k.fill + dt / CFG.inkSec); if (navigator.vibrate && Math.random() < dt * 2) navigator.vibrate(8); msg = k.fill < 1 ? '對準了！印章在吸墨，保持住……' : null; }
-    else if (!msg) msg = sensor && k.b0 == null ? '校正中，手機拿著別動……' : '微調手機，讓墨珠滑到印章中間。';
-    if (k.fill >= 1){
+      let tx = k.drag.x, ty = k.drag.y; const r = Math.hypot(tx, ty), lim = 1 - SR * .9;
+      if (r > lim){ tx *= lim / r; ty *= lim / r; }
+      k.sx += (tx - k.sx) * Math.min(1, dt * 18); k.sy += (ty - k.sy) * Math.min(1, dt * 18);
+    }
+    const vx = (k.sx - k.px) / dt, vy = (k.sy - k.py) / dt; k.px = k.sx; k.py = k.sy;
+    k.spd = k.spd * .7 + Math.hypot(vx, vy) * .3;
+    const fast = k.spd > CFG.inkFast;
+    // 墨滴
+    for (const d of k.drops){
+      if (d.out){ d.out += dt; continue; }
+      d.ph += dt;
+      d.vx += Math.sin(d.ph * 1.3) * .02 * dt; d.vy += Math.cos(d.ph * 1.1) * .02 * dt;
+      if (d.kind === 'water' && !d.pushed && t - d.born > 1200){
+        // 魚缸水慢慢朝章靠過去
+        const ex = k.sx - d.x, ey = k.sy - d.y, el = Math.hypot(ex, ey) || 1;
+        d.vx += ex / el * CFG.inkChase * dt; d.vy += ey / el * CFG.inkChase * dt;
+      }
+      d.vx *= Math.pow(.5, dt); d.vy *= Math.pow(.5, dt);
+      d.x += d.vx * dt; d.y += d.vy * dt;
+      const r = Math.hypot(d.x, d.y);
+      if (r > 1){ d.out = .001; if (d.kind === 'ink'){ k.lost++; msg = '墨滴被撞出盒外了！動作慢一點。'; } else k.respawn.push(t + 2500); continue; }
+      if (r > .94 && !d.pushed){ d.vx -= d.x * .05; d.vy -= d.y * .05; }   // 慢慢飄的墨滴不會自己出界
+      const dx = d.x - k.sx, dy = d.y - k.sy, dist = Math.hypot(dx, dy);
+      if (dist < SR + DR){
+        if (fast){
+          // 推太快：把墨滴撞開
+          const sp = Math.max(.6, k.spd * .9);
+          d.vx = dx / (dist || 1) * sp + vx * .4; d.vy = dy / (dist || 1) * sp + vy * .4; d.pushed = true;
+          d.x = k.sx + dx / (dist || 1) * (SR + DR + .01); d.y = k.sy + dy / (dist || 1) * (SR + DR + .01);
+          if (navigator.vibrate) navigator.vibrate(15);
+        } else if (d.kind === 'ink'){
+          d.out = .001; d.eaten = true; k.fill = Math.min(1, k.fill + 1 / need); k.hitAt = t;
+          if (navigator.vibrate) navigator.vibrate(20);
+        } else if (t - k.washAt < 1200){
+          // 剛被沖過，給一點喘息：水滴先彈開
+          d.vx = dx / (dist || 1) * .7; d.vy = dy / (dist || 1) * .7; d.pushed = true;
+        } else {
+          d.out = .001; d.eaten = true; k.fill = k.fill / 2; k.washAt = t;
+          msg = '糟糕，是魚缸水！章上的墨被沖掉一半。';
+          if (navigator.vibrate) navigator.vibrate([40, 30, 40]);
+          k.respawn.push(t + 2500);
+        }
+      }
+      if (d.pushed && Math.hypot(d.vx, d.vy) < .15) d.pushed = false;
+    }
+    k.drops = k.drops.filter(d => !d.out || d.out < .6);
+    // 消失的魚缸水過一下會再冒出來
+    k.respawn = k.respawn.filter(at => { if (t >= at){ inkSpawn(k, 1, 'water'); return false; } return true; });
+    if (k.fill >= 1 - 1e-6){
       T.stamped = true; msg = '贖回了！';
       const st = $('#tStamp'); if (st) st.hidden = false;
       if (navigator.vibrate) navigator.vibrate([80, 50, 200]);
       setTimeout(() => { if (K() === 'pawn' && S.ph === 'play2') pass(); }, 1300);
     }
+    const left = k.drops.filter(d => d.kind === 'ink' && !d.out).length;
+    const short = !T.stamped && left < Math.ceil((1 - k.fill) * need - 1e-6);
+    const rf = $('#inkRefill'); if (rf && rf.hidden === short) rf.hidden = !short;
+    if (!msg){
+      if (t - k.washAt < 1800) msg = '糟糕，是魚缸水！章上的墨被沖掉一半。';
+      else if (short) msg = '盒裡的墨不夠了，按「補充墨水」。';
+      else if (fast && k.drag) msg = '太快了！墨滴會被撞開。';
+      else if (!k.drag && k.fill === 0) msg = '按住「贖」字章，拖去吸紅色的墨滴。';
+      else msg = `已吸 ${Math.round(k.fill * need)} / ${need} 滴墨。避開藍綠色的魚缸水。`;
+    }
     const bar = $('#inkBar'); if (bar) bar.style.width = (k.fill * 100) + '%';
-    const m = $('#inkMsg'); if (m && msg && m.textContent !== msg){ m.textContent = msg; m.classList.toggle('bad', msg.startsWith('斜太多')); }
+    const m = $('#inkMsg'); if (m && m.textContent !== msg){ m.textContent = msg; m.classList.toggle('bad', /魚缸水！|撞出|太快|不夠/.test(msg)); }
   }
   // 畫面
   const c = cv.getContext('2d');
   c.clearRect(0, 0, W, H);
-  // 印泥盒
   const g = c.createRadialGradient(cx, cy, R * .2, cx, cy, R * 1.05);
   g.addColorStop(0, '#f1e3c4'); g.addColorStop(1, '#c9b48a');
-  c.fillStyle = '#3a2a1e'; c.beginPath(); c.arc(cx, cy, R * 1.08, 0, 6.283); c.fill();
+  c.fillStyle = '#3a2a1e'; c.beginPath(); c.arc(cx, cy, R * 1.06, 0, 6.283); c.fill();
   c.fillStyle = g; c.beginPath(); c.arc(cx, cy, R, 0, 6.283); c.fill();
-  if (t - k.spill < 600){ c.fillStyle = `rgba(178,34,34,${.25 * (1 - (t - k.spill) / 600)})`; c.beginPath(); c.arc(cx, cy, R, 0, 6.283); c.fill(); }
-  // 印章（由下往上吸飽墨）
-  const S2 = R * seal * 1.5;
-  c.save(); c.translate(cx, cy); c.rotate(-.06);
+  if (t - k.washAt < 700){ c.fillStyle = `rgba(70,160,170,${.3 * (1 - (t - k.washAt) / 700)})`; c.beginPath(); c.arc(cx, cy, R, 0, 6.283); c.fill(); }
+  for (const d of k.drops){
+    let x = cx + d.x * R, y = cy + d.y * R, r = DR * R, a = 1;
+    if (d.out){ const p = Math.min(1, d.out / .6); a = 1 - p; if (d.eaten){ x += (cx + k.sx * R - x) * p; y += (cy + k.sy * R - y) * p; r *= 1 - p * .7; } else r *= 1 + p * .5; }
+    const wob = 1 + .06 * Math.sin(d.ph * 4);
+    c.globalAlpha = a;
+    if (d.kind === 'ink'){
+      const gg = c.createRadialGradient(x - r * .3, y - r * .3, r * .1, x, y, r);
+      gg.addColorStop(0, '#ff6b5b'); gg.addColorStop(1, '#8e1712'); c.fillStyle = gg;
+      c.beginPath(); c.ellipse(x, y, r * wob, r / wob, d.ph, 0, 6.283); c.fill();
+    } else {
+      const gg = c.createRadialGradient(x - r * .3, y - r * .3, r * .1, x, y, r);
+      gg.addColorStop(0, '#bff1ea'); gg.addColorStop(1, '#2f8f95'); c.fillStyle = gg;
+      c.beginPath(); c.ellipse(x, y, r * wob, r / wob, d.ph, 0, 6.283); c.fill();
+      c.strokeStyle = 'rgba(255,255,255,.85)'; c.lineWidth = 1.2;
+      c.beginPath(); c.arc(x + r * .35, y - r * .35, r * .22, 0, 6.283); c.stroke();
+      c.beginPath(); c.arc(x - r * .1, y + r * .25, r * .14, 0, 6.283); c.stroke();
+    }
+    c.fillStyle = 'rgba(255,255,255,.55)'; c.beginPath(); c.arc(x - r * .35, y - r * .35, r * .2, 0, 6.283); c.fill();
+    c.globalAlpha = 1;
+  }
+  // 章
+  const S2 = SR * R * 1.5, sx = cx + k.sx * R, sy = cy + k.sy * R;
+  c.save(); c.translate(sx, sy); c.rotate(-.06);
+  c.fillStyle = 'rgba(0,0,0,.22)'; c.fillRect(-S2 / 2 + 4, -S2 / 2 + 5, S2, S2);
   c.fillStyle = '#efe3c8'; c.fillRect(-S2 / 2, -S2 / 2, S2, S2);
   c.save(); c.beginPath(); c.rect(-S2 / 2, S2 / 2 - S2 * k.fill, S2, S2 * k.fill); c.clip();
   c.fillStyle = '#b8231d'; c.fillRect(-S2 / 2, -S2 / 2, S2, S2); c.restore();
-  c.strokeStyle = '#b8231d'; c.lineWidth = 3; c.strokeRect(-S2 / 2, -S2 / 2, S2, S2);
+  c.strokeStyle = t - k.hitAt < 200 ? '#e8b84a' : '#b8231d'; c.lineWidth = 3; c.strokeRect(-S2 / 2, -S2 / 2, S2, S2);
   c.font = `900 ${Math.round(S2 * .62)}px "Noto Serif TC", serif`; c.textAlign = 'center'; c.textBaseline = 'middle';
   c.fillStyle = k.fill > .5 ? '#efe3c8' : 'rgba(184,35,29,.55)'; c.fillText('贖', 0, S2 * .03);
   c.restore();
-  // 目標圈
-  c.strokeStyle = 'rgba(184,35,29,.45)'; c.setLineDash([5, 5]); c.lineWidth = 1.5;
-  c.beginPath(); c.arc(cx, cy, R * seal, 0, 6.283); c.stroke(); c.setLineDash([]);
-  // 墨珠
-  if (!T.stamped){
-    const bx = cx + k.x * R, by = cy + k.y * R, br = Math.max(9, R * .1);
-    c.fillStyle = 'rgba(0,0,0,.18)'; c.beginPath(); c.ellipse(bx + 3, by + 4, br, br * .8, 0, 0, 6.283); c.fill();
-    const bg = c.createRadialGradient(bx - br * .35, by - br * .35, br * .1, bx, by, br);
-    bg.addColorStop(0, '#ff6b5b'); bg.addColorStop(1, '#8e1712');
-    c.fillStyle = bg; c.beginPath(); c.arc(bx, by, br, 0, 6.283); c.fill();
-    c.fillStyle = 'rgba(255,255,255,.6)'; c.beginPath(); c.arc(bx - br * .35, by - br * .35, br * .22, 0, 6.283); c.fill();
-  }
+  if (!k.drag && !T.stamped && k.fill === 0){ c.fillStyle = 'rgba(42,29,20,.55)'; c.font = '600 13px sans-serif'; c.textAlign = 'center'; c.fillText('按住拖曳', sx, sy + S2 / 2 + 16); }
 }
 
 // ================= 武廟：揮刀斬風 =================
@@ -2279,9 +2518,9 @@ function openAR(o){
 }
 function closeAR(){ ar = null; $('#ar').hidden = true; stopCam(); }
 function arHints(){
-  const n = S.hints[S.lv] || 0, el = $('#arHint');
+  const n = S.hints[hk()] || 0, el = $('#arHint');
   el.hidden = !n;
-  el.textContent = n ? `提示 ${n}：${L[S.lv].hints[n - 1]}` : '';
+  el.textContent = n ? `提示 ${n}：${hlist()[n - 1]}` : '';
 }
 function arCapture(){
   ar.cap = performance.now();
@@ -2483,7 +2722,7 @@ document.addEventListener('click', e => {
     case 'ar-reopen': startAR(S.lv); break;
     case 'begin': begin(); break;
     case 'next': {
-      const nx = K() === 'port' ? 0 : nextSuggest(S.lv);
+      const nx = K() === 'dice' ? 0 : nextSuggest(S.lv);
       if (!nx){ S.end = S.end || Date.now(); goto(N + 1, 'end'); }
       else goto(nx, firstPh(nx));
       break;
@@ -2505,13 +2744,17 @@ document.addEventListener('click', e => {
     case 'arrive3': pass(); break;
     case 'north-skip': T.north = true; render(); break;
     case 'pick': pick(v); break;
-    case 'key': key(v); break;
+    case 'riddle': riddle(v); break;
     case 'roll': roll(); break;
+    case 'flip': flipDie(v); break;
+    case 'dice-skip': diceSkip(); break;
+    case 'bet': T.bet = +v; T.keep = true; render(); break;
+    case 'dice-reset': T.me = CFG.diceBank; T.them = CFG.diceBank; T.rd = null; T.msg = '重新開局，雙方各有 ' + CFG.diceBank + ' 銅錢。'; T.bad = false; T.keep = true; render(); break;
     case 'tile': tile(v); break;
     case 'feed': feed(); break;
     case 'swing': arSwing(); break;
     case 'slash': slash(); break;
-    case 'ink-cal': inkCal(); break;
+    case 'ink-refill': inkRefill(); break;
     case 'ar-exit': closeAR(); render(); break;
     case 'scan-open': needPerm('camera', openScan, () => { T.ask = true; render(); }); break;
     case 'scan-exit': closeScan(); break;
