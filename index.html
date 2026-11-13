@@ -131,6 +131,8 @@ p{margin:0}
 /* 拼圖 */
 .puzzle{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;max-width:300px;margin:0 auto;width:100%}
 .tileN{position:absolute;left:6px;top:4px;font-family:var(--body,sans-serif);font-size:12px;font-weight:600;opacity:.45;pointer-events:none}
+.tile.fixed{outline:3px solid var(--gold);outline-offset:-3px;cursor:default;opacity:1;color:var(--paper-ink)}
+.tile.fixed::after{content:'固定';position:absolute;right:5px;bottom:3px;font-size:10px;font-family:sans-serif;font-weight:600;color:#9a7a2a}
 .tile{aspect-ratio:1;max-width:100%;background:var(--paper);color:var(--paper-ink);border:0;border-radius:2px;font-family:var(--display);font-weight:900;font-size:34px;cursor:pointer;position:relative}
 .tile::after{content:"";position:absolute;inset:6px;border:1px solid rgba(200,55,45,.25)}
 .tile.sel{background:var(--gold)}
@@ -449,6 +451,7 @@ const CFG = {
   diceBank: 100,        // 大天后宮：雙方一開始各有多少銅錢
   betMin: 10, betMax: 50, betStep: 10,   // 大天后宮：每局可以下注的範圍
   blowLevel: .03,       // 吹氣：音量門檻（0～1），手機收音小可以調低
+  coverFixed: [0, 8],   // 公文封面：哪幾格一開始就固定放好（0＝第 1 格「玉」，8＝第 9 格「印」）
   swingWorm: 5,        // 第 9 關揮令旗次數
   levelScore: 100,
   hintCost: 30,
@@ -575,7 +578,7 @@ const L = [null,
   who:'千里眼、順風耳', story:'公文只差最後一個印：媽祖的印。先跟千里眼、順風耳賭十八仔，雙方各有 100 銅錢，每局自己選押多少，誰先輸光誰就輸。兩位將軍太靈，每局你們都會先輸，只能翻一顆骰子到背面來反敗為勝，關公在旁邊盯著。贏了之後，金魚仙會現身做最後的搗亂：拼回公文封面、請風神颳風、把天庭驛船叫到廟前，才能交出公文。',
   puzzle:'玉帝親啟府城眾神印',
   hints:['十八仔看的是「一對以外那兩顆」的點數和。先算對手幾點，再看你們差在哪。','翻面規則：1↔6、2↔5、3↔4。把不成對的小點數翻成大點數，或翻出一對，都可能翻盤。','有把握翻盤就押多一點，沒把握就押少一點；真的怎麼翻都贏不了，就按「跳過」，不輸錢。'],
-  hints2:['照格子上的小數字 1→9 讀：由左到右、由上到下，第一個字是「玉」。','封面寫的是：要給玉帝親自打開，上面有府城眾神的印。','完整句子：玉帝親啟府城眾神印。第一排「玉帝親」、第二排「啟府城」、第三排「眾神印」。'],
+  hints2:['照格子上的小數字 1→9 讀，由左到右、由上到下。開頭「玉」和結尾「印」已經固定：「玉」後面接什麼？想想玉皇大帝。','封面寫的是：要給玉帝親自打開，上面有府城眾神的印。','完整句子：玉帝親啟府城眾神印。第一排「玉帝親」、第二排「啟府城」、第三排「眾神印」。'],
   hints3:['對著手機下方的麥克風用力吹，累積幾秒就好；麥克風不能用就按住按鈕代替。','驛船會出現在你們身後，跟著畫面邊緣的金色箭頭轉身找。','找到驛船先點一下，再揮手機當令旗，像甩鞭子一樣。'],
   reward:{item:'媽祖的印'},
   win:'驛使收下蓋滿八個印的公文，連同你們的回條，乘著風神的風往天上開走了。'
@@ -1221,13 +1224,16 @@ function viewCover(l){
   {
     if (!T.tiles){
       const n = [...l.puzzle].length;
-      let t; do { t = Array.from({length:n}, (_, i) => i).sort(() => Math.random() - .5); } while (t.every((v, i) => v === i));
+      // 固定的格子留在原位，其他的打亂（而且每一塊都不在自己的位置上）
+      const fx = CFG.coverFixed, free = Array.from({length:n}, (_, i) => i).filter(i => !fx.includes(i));
+      let sh; do { sh = free.slice().sort(() => Math.random() - .5); } while (sh.some((v, k) => v === free[k]));
+      const t = Array.from({length:n}, (_, i) => i); free.forEach((p, k) => t[p] = sh[k]);
       T.tiles = t;
     }
     const chars = [...l.puzzle];
     return `${head('拼回封面')}
-    <div class="talisman"><span class="who">公文封面</span><p>點兩塊碎片交換位置，把公文封面拼回來。<b>閱讀順序：照格子左上角的小數字 1→9，由左到右、由上到下讀</b>（第一排讀完再讀第二排、第三排），會是一句完整的話。</p></div>
-    <div class="puzzle">${T.tiles.map((ci, pos) => `<button class="tile ${T.pick === pos ? 'sel' : ''} ${ci === pos ? 'ok' : ''}" data-act="tile" data-v="${pos}" aria-label="第 ${pos+1} 格：${chars[ci]}"><small class="tileN">${pos + 1}</small>${chars[ci]}</button>`).join('')}</div>
+    <div class="talisman"><span class="who">公文封面</span><p>點兩塊碎片交換位置，把公文封面拼回來。金框的${CFG.coverFixed.length === 2 ? '兩' : CFG.coverFixed.length}格（「${CFG.coverFixed.map(i => chars[i]).join('」「')}」）已經放對了，不能動，從它們開始推。<b>閱讀順序：照格子左上角的小數字 1→9，由左到右、由上到下讀</b>（第一排讀完再讀第二排、第三排），會是一句完整的話。</p></div>
+    <div class="puzzle">${T.tiles.map((ci, pos) => `<button class="tile ${T.pick === pos ? 'sel' : ''} ${ci === pos ? 'ok' : ''} ${CFG.coverFixed.includes(pos) ? 'fixed' : ''}" data-act="tile" data-v="${pos}" ${CFG.coverFixed.includes(pos) ? 'disabled' : ''} aria-label="第 ${pos+1} 格：${chars[ci]}${CFG.coverFixed.includes(pos) ? '（固定）' : ''}"><small class="tileN">${pos + 1}</small>${chars[ci]}</button>`).join('')}</div>
     <div class="muted" style="text-align:center">淡綠色代表放對位置</div>${hintBlock()}`;
   }
 }
@@ -1857,6 +1863,7 @@ function spinDice(){ document.querySelectorAll('.die').forEach(e => e.classList.
 // 第 9 關
 function tile(pos){
   pos = +pos;
+  if (CFG.coverFixed.includes(pos)) return;
   if (T.pick == null) T.pick = pos;
   else if (T.pick === pos) T.pick = null;
   else { const t = T.tiles; [t[T.pick], t[pos]] = [t[pos], t[T.pick]]; T.pick = null; }
