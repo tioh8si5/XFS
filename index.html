@@ -97,6 +97,12 @@ p{margin:0}
 .betRow .chip{min-width:52px;min-height:52px;width:52px;height:52px;padding:0;border-radius:50%;border:2px solid var(--gold);background:transparent;color:var(--gold);font-family:var(--display);font-weight:900;font-size:16px;cursor:pointer}
 .betRow .chip.on{background:var(--gold);color:var(--ink)}
 .betRow .chip[disabled]{opacity:.3;cursor:default}
+.micBox{display:flex;align-items:center;gap:10px}
+.micBox .muted{font-size:13px;white-space:nowrap}
+.micBar{position:relative;flex:1;height:10px;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+.micBar i{position:absolute;left:0;top:0;bottom:0;width:0;background:#6a8a9a;transition:width .08s}
+.micBar i.hot{background:var(--gold)}
+.micBar b{position:absolute;left:50%;top:-2px;bottom:-2px;width:2px;background:var(--cinnabar)}
 .duelRow{display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid var(--line);padding-bottom:4px}
 .duelRow b{font-family:var(--display);font-size:22px;color:var(--gold)}
 .die{width:58px;height:58px;background:var(--paper);border-radius:9px;display:grid;grid-template-columns:repeat(3,1fr);padding:7px;gap:2px;box-shadow:0 4px 0 #b9a77f}
@@ -442,6 +448,7 @@ const CFG = {
   bladeSlashes: 6,      // 武廟：要斬幾刀
   diceBank: 100,        // 大天后宮：雙方一開始各有多少銅錢
   betMin: 10, betMax: 50, betStep: 10,   // 大天后宮：每局可以下注的範圍
+  blowLevel: .03,       // 吹氣：音量門檻（0～1），手機收音小可以調低
   swingWorm: 5,        // 第 9 關揮令旗次數
   levelScore: 100,
   hintCost: 30,
@@ -658,22 +665,45 @@ function startCam(sel){
     .catch(() => false);
 }
 function stopCam(){ if (stream){ stream.getTracks().forEach(t => t.stop()); stream = null; } $('#cam').srcObject = null; $('#scanCam').srcObject = null; }
+// 吹氣偵測：看麥克風收到的音量（不錄音）。
+// 手機預設會開「降噪、自動增益」，會把吹氣的風聲當雜音濾掉，所以這裡把它們關掉。
+// iPhone 的聲音引擎要在使用者點按的當下建立，否則會一直是暫停狀態、讀不到聲音。
 function startMic(){
   if (mic || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
-  navigator.mediaDevices.getUserMedia({audio:true, video:false}).then(s => {
-    const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
-    const ac = new AC(), src = ac.createMediaStreamSource(s), an = ac.createAnalyser();
-    an.fftSize = 512; src.connect(an);
-    mic = {s, ac, an, buf:new Float32Array(an.fftSize)};
+  const AC = window.AudioContext || window.webkitAudioContext; if (!AC){ T.micNo = true; return render(); }
+  const ac = new AC(); try { ac.resume(); } catch(e){}
+  navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false, noiseSuppression:false, autoGainControl:false}, video:false}).then(s => {
+    const src = ac.createMediaStreamSource(s), an = ac.createAnalyser();
+    an.fftSize = 1024; src.connect(an);
+    mic = {s, ac, an, buf:new Float32Array(an.fftSize), floor:.01, peak:0};
     T.micOk = true; render();
-  }).catch(() => { T.micNo = true; render(); });
+  }).catch(() => { try { ac.close(); } catch(e){} T.micNo = true; render(); });
 }
+if (/[?&]test\b/.test(location.search)) window.__mic = () => mic && {floor:mic.floor, peak:mic.peak, state:mic.ac.state, lvl:micLevel()};   // 自動測試用
+document.addEventListener('pointerdown', () => { if (mic && mic.ac.state === 'suspended') mic.ac.resume().catch(()=>{}); }, true);
 function stopMic(){ if (mic){ mic.s.getTracks().forEach(t => t.stop()); mic.ac.close().catch(()=>{}); mic = null; } }
 function micLevel(){
   if (!mic) return 0;
+  if (mic.ac.state === 'suspended') mic.ac.resume().catch(()=>{});
   mic.an.getFloatTimeDomainData(mic.buf);
   let s = 0; for (const v of mic.buf) s += v * v;
-  return Math.sqrt(s / mic.buf.length);
+  const lvl = Math.sqrt(s / mic.buf.length);
+  // 環境音的底噪：安靜時慢慢學習，吹氣時不更新
+  if (lvl < mic.floor * 2) mic.floor = mic.floor * .97 + lvl * .03;
+  mic.peak = Math.max(lvl, mic.peak * .9);
+  return lvl;
+}
+// 有沒有在吹：音量要明顯高過環境底噪，也要超過最低門檻
+function micBlowing(){
+  const lvl = micLevel();
+  return !!mic && lvl > Math.max(CFG.blowLevel, mic.floor * 3);
+}
+// 畫面上的麥克風音量條，讓玩家看到手機有沒有收到聲音
+function micMeter(id){
+  const el = $(id); if (!el) return;
+  const v = mic ? Math.min(1, mic.peak / (Math.max(CFG.blowLevel, mic.floor * 3) * 2)) : 0;
+  el.style.width = (v * 100) + '%';
+  el.classList.toggle('hot', v >= .5);
 }
 
 // ================= 開啟裝置前先告知 =================
@@ -1294,6 +1324,7 @@ function viewHair(l){
   <div class="mozWrap"><canvas id="hairCv" aria-label="金魚仙游向大聖的印，吹氣變出分身把他圍住"></canvas></div>
   <div class="bar"><i id="hairBar" style="width:0%"></i></div>
   <div class="msg" id="hairMsg">${T.micNo ? '麥克風沒有開啟，請按住下面的按鈕代替吹氣。' : (T.micOk ? '對著麥克風用力吹！' : '正在開啟麥克風……')}</div>
+<div class="micBox"><span class="muted">麥克風音量</span><div class="micBar"><i id="micMeter"></i><b></b></div></div>
   <button class="btn ghost wide" id="hairHold" style="touch-action:none;user-select:none;-webkit-user-select:none">按住代替吹氣</button>${hintBlock()}`;
 }
 
@@ -1302,7 +1333,8 @@ function viewBlow(){
   <div class="talisman"><span class="who">風神</span><p>「我睡過頭，忘了颳風啦！幫我吹一口氣。」全組輪流對著手機下方的麥克風用力吹氣，累積 ${CFG.blowSeconds} 秒。</p></div>
   <div class="big" id="blowPct" style="font-size:48px">0%</div>
   <div class="bar"><i id="blowBar" style="width:0%"></i></div>
-  <div class="muted" id="blowNote">${T.micNo ? '麥克風沒有開啟，請按住下面的按鈕代替吹氣。' : (T.micOk ? '對著麥克風吹氣。' : '正在開啟麥克風…')}</div>
+<div class="micBox"><span class="muted">麥克風音量</span><div class="micBar"><i id="micMeter"></i><b></b></div></div>
+  <div class="muted" id="blowNote">${T.micNo ? '麥克風沒有開啟，請按住下面的按鈕代替吹氣。' : (T.micOk ? '對著手機下方的麥克風吹氣，音量條要超過紅線。' : '正在開啟麥克風…')}</div>
   <button class="btn ghost wide" id="blowHold" style="touch-action:none;user-select:none;-webkit-user-select:none">按住代替吹氣</button>`;
 }
 
@@ -1835,8 +1867,8 @@ let blowAcc = 0, holdDown = false, lastTick = 0;
 function tickBlow(t){
   const dt = lastTick ? Math.min(.1, (t - lastTick) / 1000) : 0; lastTick = t;
   if (K() !== 'dice' || S.ph !== 'blow') return;
-  const lvl = micLevel();
-  if (holdDown || lvl > 0.12) blowAcc += dt;
+  const blow = micBlowing(); micMeter('#micMeter');
+  if (holdDown || blow) blowAcc += dt;
   const p = Math.min(1, blowAcc / CFG.blowSeconds);
   const a = $('#blowPct'); if (!a) return;
   a.textContent = Math.round(p * 100) + '%';
@@ -2195,7 +2227,7 @@ function tickHair(t){
   const seal = {x:W * .17, y:H * .5}, far = W * .86;
   const fishX = () => seal.x + 40 + h.fx * (far - seal.x - 40), fishY = H * .5 + Math.sin(t / 380) * 10;
   let msg = null;
-  const blowing = hairHold || micLevel() > .12;
+  const blowing = hairHold || micBlowing(); micMeter('#micMeter');
   if (!h.done && dt > 0){
     if (blowing){
       h.acc += dt;
